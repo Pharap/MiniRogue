@@ -63,9 +63,9 @@ void renderMessageBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
 
 }
 
-void renderPlayerDead() {
+void renderPlayerDead(uint8_t y) {
 
-  Sprites::drawOverwrite(38, 25, Images::Message_PlayerDead, 0);
+  Sprites::drawExternalMask(36, y, Images::Message_PlayerDead, Images::Message_PlayerDead_Mask, 0, 0);
 
 }
 

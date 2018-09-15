@@ -81,7 +81,8 @@ void ShowCardsState_activate() {
 			
 		}
 
-		//SJH  cards[0] = GameStateType::BossMonster;
+cards[0] = GameStateType::Trap;		//SJH  
+playerStats.hp = 0; //sjh
 
 	}
 	else {
@@ -239,7 +240,7 @@ void ShowCardsState_render() {
 
   if (showCards_ViewState == ShowCards_ViewState::PlayerDead) {
 
-    renderPlayerDead();
+    renderPlayerDead(PLAYER_DEAD_DEFAULT_Y);
 
 	}
 

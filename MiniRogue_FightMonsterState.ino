@@ -698,7 +698,7 @@ void FightMonsterState_render() {
 		case FightMonster_ViewState::HighlightPlayerStats:
 	
 			if (fightMonster_NextState == FightMonster_ViewState::PlayerDead) {
-				renderPlayerDead();
+				renderPlayerDead(PLAYER_DEAD_DEFAULT_Y);
 			}
 
 			break;
@@ -738,7 +738,7 @@ void FightMonsterState_render() {
 
 		case FightMonster_ViewState::PlayerDead:
 
-			renderPlayerDead();
+			renderPlayerDead(PLAYER_DEAD_DEFAULT_Y);
 			break;
 
 		case FightMonster_ViewState::ItemIceUsed:

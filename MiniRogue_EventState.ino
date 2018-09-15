@@ -165,7 +165,7 @@ void EventState_render() {
 
     case Event_ViewState::PlayerDead:
 
-      renderPlayerDead();
+      renderPlayerDead(PLAYER_DEAD_DEFAULT_Y);
       break;
 
   }

@@ -241,7 +241,11 @@ void TrapState_render() {
 
     case Trap_ViewState::PlayerDead:
 
-      renderPlayerDead();
+      font3x5.setCursor(4, 0);
+      TrapState_printTrapName();
+      renderLargeSpinningCard(28, 8, 0);
+      ardBitmap.drawCompressed(30, 10, Images::Trap_Dice[dice - 1], WHITE, ALIGN_NONE, MIRROR_NONE);
+      renderPlayerDead(35);
       break;
 
   }
