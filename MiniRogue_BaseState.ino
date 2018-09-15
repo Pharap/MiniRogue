@@ -2,41 +2,6 @@
 #include "src/utils/FadeEffects.h"
 #include "src/fonts/Font3x5.h"
 
-enum FlashSettings : uint8_t {
-	None = 0,
-	FlashXP = (1 << 0),
-	FlashHP = (1 << 1),
-	FlashArmour = (1 << 2),
-	FlashGold = (1 << 3),
-	FlashFood = (1 << 4),
-};
-
-constexpr inline FlashSettings operator |(FlashSettings left, FlashSettings right) {
-	return static_cast<FlashSettings>(static_cast<uint8_t>(left) | static_cast<uint8_t>(right));
-}
-
-constexpr inline FlashSettings operator &(FlashSettings left, FlashSettings right) {
-	return static_cast<FlashSettings>(static_cast<uint8_t>(left) & static_cast<uint8_t>(right));
-}
-
-constexpr inline FlashSettings operator ^(FlashSettings left, FlashSettings right) {
-	return static_cast<FlashSettings>(static_cast<uint8_t>(left) ^ static_cast<uint8_t>(right));
-}
-
-inline FlashSettings & operator |=(FlashSettings & left, FlashSettings right) {
-	left = (left | right);
-	return left;
-}
-
-inline FlashSettings & operator &=(FlashSettings & left, FlashSettings right) {
-	left = (left & right);
-	return left;
-}
-
-inline FlashSettings & operator ^=(FlashSettings & left, FlashSettings right) {
-	left = (left ^ right);
-	return left;
-}
 
 void renderSpinningCard(int8_t x, int8_t y, uint8_t i, uint8_t ySpacing) {
 

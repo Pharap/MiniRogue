@@ -8,7 +8,7 @@ FadeOutEffect fadeOutEffect;
 // ----------------------------------------------------------------------------
 //  Initialise state ..
 //
-void SplashScreenState::activate() {
+void SplashScreenState_activate() {
 
   fadeOutEffect.reset(0, HEIGHT, 1); 
 
@@ -18,7 +18,7 @@ void SplashScreenState::activate() {
 // ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
-void SplashScreenState::update() { 
+void SplashScreenState_update() { 
 
 }
 
@@ -26,7 +26,7 @@ void SplashScreenState::update() {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void SplashScreenState::render() {
+void SplashScreenState_render() {
 
   ardBitmap.drawCompressed(30, 14, Images::BootLogo, WHITE, ALIGN_NONE, MIRROR_NONE);
 

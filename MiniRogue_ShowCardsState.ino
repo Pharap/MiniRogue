@@ -22,13 +22,12 @@ enum class ShowCards_ViewState : uint8_t {
   PlayerDead
 };
 
-ShowCards_ViewState viewState = ShowCards_ViewState::DealCards;
+ShowCards_ViewState showCards_ViewState = ShowCards_ViewState::DealCards;
 
 int8_t displayCard = 0;           
 uint8_t numberOfCardsToDisplay = 6;
 
 constexpr const static int8_t STARVED_TO_DEATH = -1; 
-constexpr const static uint8_t NO_OF_CARDS_IN_FLIP = 7; 
 constexpr const static uint8_t DEAL_DELAY = 5; 
 constexpr const static uint8_t CARD_SHOW_NONE = -1;
 constexpr const static uint8_t CARD_SHOW_ALL = 127;
@@ -44,13 +43,15 @@ const uint8_t cardIndexToRoom[] PROGMEM = { 1, 2, 2, 3, 4, 4, 5 };
 //
 void ShowCardsState_activate() {
 
-	this->numberOfCardsToDisplay = (gameStats.isLastLevelInArea() ? 7 : 6);
+	counter = 0;
+	displayCard = 0;
+	numberOfCardsToDisplay = (gameStats.isLastLevelInArea() ? 7 : 6);
   arduboy.resetFrameCount();
 
 	if (gameStats.room <= 0) {
 
-		this->viewState = ShowCards_ViewState::DealCards;
-		this->displayCard = 0;
+		showCards_ViewState = ShowCards_ViewState::DealCards;
+		displayCard = 0;
 		counter = NO_OF_CARDS_IN_FLIP;
 
 
@@ -68,8 +69,8 @@ void ShowCardsState_activate() {
 
 		if (playerStats.food == STARVED_TO_DEATH) {
 
-  		this->displayCard = CARD_SHOW_ALL;
-			this->viewState = ShowCards_ViewState::PlayerDead;
+  		displayCard = CARD_SHOW_ALL;
+			showCards_ViewState = ShowCards_ViewState::PlayerDead;
       playerStats.food = 0;
   		gameStats.room = 0;
 
@@ -85,9 +86,9 @@ void ShowCardsState_activate() {
 	}
 	else {
 
-		this->displayCard = CARD_SHOW_ALL;
+		displayCard = CARD_SHOW_ALL;
   	counter = NO_OF_CARDS_IN_FLIP;
-		this->viewState = ShowCards_ViewState::PlayCard;
+		showCards_ViewState = ShowCards_ViewState::PlayCard;
 		
 	}
   
@@ -101,18 +102,18 @@ void ShowCardsState_update() {
 	
   auto justPressed = arduboy.justPressedButtons();
 
-	switch (this->viewState) {
+	switch (showCards_ViewState) {
 
 		case ShowCards_ViewState::DealCards:
 
 			if (arduboy.everyXFrames(DEAL_DELAY)) {
 
-				if (this->displayCard < numberOfCardsToDisplay) {
-					this->displayCard++;
+				if (displayCard < numberOfCardsToDisplay) {
+					displayCard++;
 				}
 				else {
-					this->displayCard = CARD_SHOW_ALL;
-        	this->viewState = ShowCards_ViewState::PlayCard;
+					displayCard = CARD_SHOW_ALL;
+        	showCards_ViewState = ShowCards_ViewState::PlayCard;
 					counter = NO_OF_CARDS_IN_FLIP;
 				}
 
@@ -177,7 +178,7 @@ void ShowCardsState_render() {
 
 	// Player statistics ..
 
-	const FlashSettings settings = ((viewState == ShowCards_ViewState::PlayerDead) ? FlashSettings::FlashFood : FlashSettings::None);
+	const FlashSettings settings = ((showCards_ViewState == ShowCards_ViewState::PlayerDead) ? FlashSettings::FlashFood : FlashSettings::None);
 
 	renderPlayerStatistics(true, settings);
 
@@ -185,7 +186,7 @@ void ShowCardsState_render() {
 
 	for (uint8_t i = 0; i < 7; i++) {
 
-		if (this->displayCard >= i) {
+		if (displayCard >= i) {
 
 			int8_t x =  pgm_read_byte(&cardPositionX[i]);
 			uint8_t y = pgm_read_byte(&cardPositionY[i]);
@@ -196,14 +197,15 @@ void ShowCardsState_render() {
 
 			if (counter == NO_OF_CARDS_IN_FLIP || (room != r && counter > 0) || counter == 0) {
 
-        renderSpinningCard(x, y, 6);
+        renderSpinningCard(x, y, 6, 13);
 
 			}
 
 
       // Draw card highlight ..
-      
-			if (this->displayCard == CARD_SHOW_ALL && (gameStats.selectedCard == i) && flash && room != 0) {
+
+
+			if (displayCard == CARD_SHOW_ALL && (gameStats.selectedCard == i) && flash && room != 0) {
 
         ardBitmap.drawCompressed(x, y, Images::Card_Outline_Highlight_Comp, BLACK, ALIGN_NONE, MIRROR_NONE);
 
@@ -211,16 +213,16 @@ void ShowCardsState_render() {
 
       if (room != 0) {
 
-        if ((room > r) || (room == r && counter == 0) || (i == 6 && this->numberOfCardsToDisplay == 6)) {
+        if ((room > r) || (room == r && counter == 0) || (i == 6 && numberOfCardsToDisplay == 6)) {
 
           arduboy.fillRect(x + 3, y + 4, 14, 21, BLACK);
-          ardBitmap.drawCompressed(x + 3, y + 6, Images::Card_Faces[(i == 6 && this->numberOfCardsToDisplay == 6 ? 7 : static_cast<uint8_t>(cards[i]) - 1)], WHITE, ALIGN_NONE, MIRROR_NONE);
+          ardBitmap.drawCompressed(x + 3, y + 6, Images::Card_Faces[(i == 6 && numberOfCardsToDisplay == 6 ? 7 : static_cast<uint8_t>(cards[i]) - 1)], WHITE, ALIGN_NONE, MIRROR_NONE);
 
         }
 
-        if (room == r && counter > 0 && this->displayCard == CARD_SHOW_ALL) {
+        if (room == r && counter > 0 && displayCard == CARD_SHOW_ALL) {
 
-					renderSpinningCard(x, y, counter - 1);
+					renderSpinningCard(x, y, counter - 1, 13);
 
         }
 
@@ -230,12 +232,12 @@ void ShowCardsState_render() {
 
 	}
 
-	if (counter > 0 && this->displayCard == CARD_SHOW_ALL) counter --;
+	if (counter > 0 && displayCard == CARD_SHOW_ALL) counter --;
 
 
 	// Are we dead?
 
-  if (viewState == ShowCards_ViewState::PlayerDead) {
+  if (showCards_ViewState == ShowCards_ViewState::PlayerDead) {
 
     renderPlayerDead();
 

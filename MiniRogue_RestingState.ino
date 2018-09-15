@@ -7,16 +7,35 @@ enum class Resting_ViewState : uint8_t {
   UpdateStats,
 };
 
-enum class SelectedItem : uint8_t {
+enum class Resting_SelectedItem : uint8_t {
   Food,
   Heal,
   Weapon,
 };
 
-Resting_ViewState viewState = Resting_ViewState::SelectReward;
-SelectedItem selectedItem = SelectedItem::Food;
-SelectedItem prevSelection = SelectedItem::Food;
+Resting_ViewState resting_ViewState = Resting_ViewState::SelectReward;
+Resting_SelectedItem resting_SelectedItem = Resting_SelectedItem::Food;
+Resting_SelectedItem resting_PrevSelection = Resting_SelectedItem::Food;
 
+
+
+
+// ----------------------------------------------------------------------------
+//  Initialise state ..
+//
+void RestingState_activate() {
+
+  counter = 0;
+  merchantState_SelectedItem = 0;
+  errorNumber = 0;
+  
+  resting_ViewState = Resting_ViewState::SelectReward;
+  resting_SelectedItem = Resting_SelectedItem::Food;
+  resting_PrevSelection = Resting_SelectedItem::Food;
+
+  event_ViewState = Event_ViewState::RollDice;
+
+}
 
 
 // ----------------------------------------------------------------------------
@@ -26,34 +45,34 @@ void RestingState_update() {
 
   auto justPressed = arduboy.justPressedButtons();
 
-  switch (this->viewState) {
+  switch (resting_ViewState) {
 
     case Resting_ViewState::SelectReward:
 
-      if ((justPressed & LEFT_BUTTON) && this->selectedItem == SelectedItem::Weapon)     { this->selectedItem = this->prevSelection; }
-      if ((justPressed & RIGHT_BUTTON) && this->selectedItem != SelectedItem::Weapon)    { this->prevSelection = this->selectedItem; this->selectedItem = SelectedItem::Weapon; }
-      if ((justPressed & DOWN_BUTTON) && this->selectedItem == SelectedItem::Food)       { this->selectedItem = SelectedItem::Heal; }
-      if ((justPressed & UP_BUTTON) && this->selectedItem == SelectedItem::Heal)         { this->selectedItem = SelectedItem::Food; }
+      if ((justPressed & LEFT_BUTTON) && resting_SelectedItem == Resting_SelectedItem::Weapon)     { resting_SelectedItem = resting_PrevSelection; }
+      if ((justPressed & RIGHT_BUTTON) && resting_SelectedItem != Resting_SelectedItem::Weapon)    { resting_PrevSelection = resting_SelectedItem; resting_SelectedItem = Resting_SelectedItem::Weapon; }
+      if ((justPressed & DOWN_BUTTON) && resting_SelectedItem == Resting_SelectedItem::Food)       { resting_SelectedItem = Resting_SelectedItem::Heal; }
+      if ((justPressed & UP_BUTTON) && resting_SelectedItem == Resting_SelectedItem::Heal)         { resting_SelectedItem = Resting_SelectedItem::Food; }
 
       if (justPressed & A_BUTTON)   { 
 
-        switch (this->selectedItem) {
+        switch (resting_SelectedItem) {
 
-          case SelectedItem::Weapon:
+          case Resting_SelectedItem::Weapon:
             playerStats.incXP(1);
             break;
 
-          case SelectedItem::Food:
+          case Resting_SelectedItem::Food:
             playerStats.food++;
             break;
 
-          case SelectedItem::Heal:
+          case Resting_SelectedItem::Heal:
             playerStats.incHP(2);
             break;
 
         }
 
-        this->viewState = Resting_ViewState::UpdateStats;
+        resting_ViewState = Resting_ViewState::UpdateStats;
 
       }
 
@@ -99,9 +118,9 @@ void RestingState_render() {
 
 	// Player statistics ..
 
-	static_assert(SelectedItem::Food == static_cast<SelectedItem>(0), "SelectedItem enum changed, please update the settingsHelper array.");
-	static_assert(SelectedItem::Heal == static_cast<SelectedItem>(1), "SelectedItem enum changed, please update the settingsHelper array.");
-	static_assert(SelectedItem::Weapon == static_cast<SelectedItem>(2), "SelectedItem enum changed, please update the settingsHelper array.");
+	static_assert(Resting_SelectedItem::Food == static_cast<Resting_SelectedItem>(0), "SelectedItem enum changed, please update the settingsHelper array.");
+	static_assert(Resting_SelectedItem::Heal == static_cast<Resting_SelectedItem>(1), "SelectedItem enum changed, please update the settingsHelper array.");
+	static_assert(Resting_SelectedItem::Weapon == static_cast<Resting_SelectedItem>(2), "SelectedItem enum changed, please update the settingsHelper array.");
 
 	static const FlashSettings settingsHelper[] PROGMEM = 
 	{
@@ -113,9 +132,9 @@ void RestingState_render() {
 		FlashSettings::FlashXP,
 	};
 
-	const uint8_t index = static_cast<uint8_t>(this->selectedItem);
+	const uint8_t index = static_cast<uint8_t>(resting_SelectedItem);
 	const FlashSettings settings = static_cast<FlashSettings>(pgm_read_byte(&settingsHelper[index]));
-	const bool shouldFlash = (this->viewState == Resting_ViewState::UpdateStats);
+	const bool shouldFlash = (resting_ViewState == Resting_ViewState::UpdateStats);
 
 	renderPlayerStatistics(shouldFlash, settings);
 
@@ -126,23 +145,23 @@ void RestingState_render() {
     uint8_t c = 0;
     uint8_t d = 34;
     
-    switch (this->selectedItem) {
+    switch (resting_SelectedItem) {
 
-      case SelectedItem::Food:
+      case Resting_SelectedItem::Food:
         // a = 0;
         // b = 48;
         // c = 0;
         // d = 34;
         break;
 
-      case SelectedItem::Heal:
+      case Resting_SelectedItem::Heal:
         // a = 0;
         // b = 48;
         c = 36;
         d = 63;
         break;
 
-      case SelectedItem::Weapon:
+      case Resting_SelectedItem::Weapon:
         a = 50;
         b = 87;
         // c = 0;

@@ -10,6 +10,16 @@ constexpr const static uint8_t UPLOAD_DELAY = 16;
 
 
 // ----------------------------------------------------------------------------
+//  Initialise state ..
+//
+void TitleScreenState_activate() {
+
+	restart = 0;
+
+}
+
+
+// ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
 void TitleScreenState_update() {
@@ -51,7 +61,8 @@ void TitleScreenState_update() {
 		playerStats.food = pgm_read_byte(&InitSettings[idx]);
 		playerStats.xpTrack = 1;
 
-		machine.getContext().resetGame();
+		gameStats.resetGame();
+		playerStats.resetGame();
 		currentState = GameStateType::ShowCards;
 	
 		//SJH playerStats.hp = 20; 

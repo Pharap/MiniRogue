@@ -8,17 +8,20 @@ RollDice,
 UpdateStats
 };
 
-Treasure_ViewState viewState = Treasure_ViewState::InitialRoll;
+Treasure_ViewState treasure_ViewState = Treasure_ViewState::InitialRoll;
 
 bool foundTreasure = false;
-
-constexpr const static uint8_t NO_OF_CARDS_IN_FLIP = 7; 
 
 
 // ----------------------------------------------------------------------------
 //  Initialise state ..
 //
 void TreasureState_activate() { 
+
+  counter = 0;
+  dice = 0;
+  foundTreasure = false;
+  treasure_ViewState = Treasure_ViewState::InitialRoll;
 
 }
 
@@ -30,7 +33,7 @@ void TreasureState_update() {
 
   auto justPressed = arduboy.justPressedButtons();
 
-  switch (this->viewState) {
+  switch (treasure_ViewState) {
 
     case Treasure_ViewState::InitialRoll:
 
@@ -59,7 +62,7 @@ void TreasureState_update() {
           if (justPressed & A_BUTTON) {
 
             counter = NO_OF_CARDS_IN_FLIP;
-            this->viewState = Treasure_ViewState::RollDice;
+            treasure_ViewState = Treasure_ViewState::RollDice;
             dice = random(1, 7);
 
           }
@@ -69,7 +72,7 @@ void TreasureState_update() {
 
           playerStats.incGold(gameStats.monsterDefeated ? 2 : 1);
           counter = 0;
-          this->viewState = Treasure_ViewState::UpdateStats;   
+          treasure_ViewState = Treasure_ViewState::UpdateStats;   
 
         }
 
@@ -86,7 +89,7 @@ void TreasureState_update() {
 			} 
 			else {
           
-        this->foundTreasure = true;
+        foundTreasure = true;
         if (playerStats.itemCount() >= 2 && dice < 5) dice = 7;
 
         switch (dice) {
@@ -99,7 +102,7 @@ void TreasureState_update() {
         }
           
         counter = 0;
-        this->viewState = Treasure_ViewState::UpdateStats;
+        treasure_ViewState = Treasure_ViewState::UpdateStats;
         playerStats.incGold(gameStats.monsterDefeated ? 2 : 1);
 
 			}
@@ -140,7 +143,7 @@ void TreasureState_render() {
   renderBackground(true);
   ardBitmap.drawCompressed(0, 0, Images::Chest_Background_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 
-  switch (this->viewState) {
+  switch (treasure_ViewState) {
 
     case Treasure_ViewState::InitialRoll:
 
@@ -168,7 +171,7 @@ void TreasureState_render() {
 
     case Treasure_ViewState::UpdateStats:
 
-      if (this->foundTreasure) {
+      if (foundTreasure) {
 
         TreasureState_renderSelectTreasure();
 
@@ -190,13 +193,13 @@ void TreasureState_render() {
 
 	if (dice == 6)        		                    settings |= FlashSettings::FlashXP;
 	else if (dice == 5)    		                    settings |= FlashSettings::FlashArmour;
-	else if (dice == 4 && this->foundTreasure)		settings |= FlashSettings::FlashHP;
+	else if (dice == 4 && foundTreasure)		settings |= FlashSettings::FlashHP;
 
-	const bool shouldFlash = (this->viewState == Treasure_ViewState::UpdateStats && counter < FLASH_COUNTER);
+	const bool shouldFlash = (treasure_ViewState == Treasure_ViewState::UpdateStats && counter < FLASH_COUNTER);
 
 	renderPlayerStatistics(shouldFlash, settings);
 
-  if (this->viewState == Treasure_ViewState::UpdateStats && this->foundTreasure && counter < FLASH_COUNTER && flash) {
+  if (treasure_ViewState == Treasure_ViewState::UpdateStats && foundTreasure && counter < FLASH_COUNTER && flash) {
 
     font3x5.setCursor(8, 0);
     TreasureState_printCaption(dice - 1); 
@@ -216,7 +219,7 @@ void TreasureState_renderSelectTreasure() {
 
   ardBitmap.drawCompressed(14, 8, Images::Chest_Open_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 
-  if (this->viewState == Treasure_ViewState::RollDice && counter > 0) {
+  if (treasure_ViewState == Treasure_ViewState::RollDice && counter > 0) {
 
     renderSpinningCard(34, 13, counter - 1, 5);
 

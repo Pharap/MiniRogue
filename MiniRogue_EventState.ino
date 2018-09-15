@@ -19,7 +19,25 @@ char const * const eventDice_Captions[] = {
 	eventDice_Caption_06,
 };
 
-constexpr const static uint8_t NO_OF_CARDS_IN_FLIP = 13; 
+enum class Event_ViewState : uint8_t {
+	RollDice,
+	UpdateStats,
+	PlayerDead
+};
+
+Event_ViewState event_ViewState = Event_ViewState::RollDice;
+
+
+// ----------------------------------------------------------------------------
+//  Initialise state ..
+//
+void EventState_activate() {
+
+  counter = 0;
+  dice = 0;
+  event_ViewState = Event_ViewState::RollDice;
+
+}
 
 
 // ----------------------------------------------------------------------------
@@ -29,11 +47,11 @@ void EventState_update() {
 
   auto justPressed = arduboy.justPressedButtons();
 
-  switch (this->viewState) {
+  switch (event_ViewState) {
 
     case Event_ViewState::RollDice:
       
-			if (counter < NO_OF_CARDS_IN_FLIP - 1) {
+			if (counter < NO_OF_CARDS_IN_FLIP_13 - 1) {
 
 				dice = random(1, 7);
 				counter++;
@@ -52,7 +70,7 @@ void EventState_update() {
 
         }
 
-        this->viewState = Event_ViewState::UpdateStats;
+        event_ViewState = Event_ViewState::UpdateStats;
         counter = 0;
 
 			}
@@ -113,13 +131,13 @@ void EventState_render() {
 
   renderBackground(true);
   
-  switch (this->viewState) {
+  switch (event_ViewState) {
 
     case Event_ViewState::RollDice:
 
       renderLargeSpinningCard(28, 8, counter);
       
-      if (counter < NO_OF_CARDS_IN_FLIP) {
+      if (counter < NO_OF_CARDS_IN_FLIP_13) {
 
         if (Images::Large_Spinning_Inlays[counter] > 0) {
           for (uint8_t i = 0, j = 0; i < Images::Large_Spinning_Inlays[counter]; i++, j = j + 2) {
@@ -141,7 +159,7 @@ void EventState_render() {
       renderLargeSpinningCard(28, 8, 0);
       ardBitmap.drawCompressed(30, 10, Images::Event_Dice[dice - 1], WHITE, ALIGN_NONE, MIRROR_NONE);
       font3x5.setCursor(4, 0);
-      printEventName();
+      EventState_printEventName();
 
       break;
 
@@ -164,7 +182,7 @@ void EventState_render() {
 	};
 
 	const FlashSettings settings = (dice < 5) ? static_cast<FlashSettings>(pgm_read_byte(&diceHelper[dice])) : FlashSettings::None;
-	const bool shouldFlash = (this->viewState == Event_ViewState::UpdateStats && counter < FLASH_COUNTER);
+	const bool shouldFlash = (event_ViewState == Event_ViewState::UpdateStats && counter < FLASH_COUNTER);
 
 	renderPlayerStatistics(shouldFlash, settings);
 

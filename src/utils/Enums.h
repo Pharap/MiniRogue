@@ -10,7 +10,8 @@ constexpr const static uint8_t FLASH_COUNTER = 70;
 constexpr const static uint8_t WINNER_LEVEL = 5;
 constexpr const static uint8_t DO_NOT_EDIT_SLOT = 255;
 constexpr const static uint8_t MAX_NUMBER_OF_SCORES         = 5;
-
+constexpr const static uint8_t NO_OF_CARDS_IN_FLIP = 7; 
+constexpr const static uint8_t NO_OF_CARDS_IN_FLIP_13 = 13; 
 const uint8_t InitSettings[] PROGMEM = {
 	1, 5, 5, 6,
 	0, 5, 3, 6,
@@ -260,3 +261,40 @@ struct GameStats {
   }
 
 };
+
+
+enum FlashSettings : uint8_t {
+	None = 0,
+	FlashXP = (1 << 0),
+	FlashHP = (1 << 1),
+	FlashArmour = (1 << 2),
+	FlashGold = (1 << 3),
+	FlashFood = (1 << 4),
+};
+
+constexpr inline FlashSettings operator |(FlashSettings left, FlashSettings right) {
+	return static_cast<FlashSettings>(static_cast<uint8_t>(left) | static_cast<uint8_t>(right));
+}
+
+constexpr inline FlashSettings operator &(FlashSettings left, FlashSettings right) {
+	return static_cast<FlashSettings>(static_cast<uint8_t>(left) & static_cast<uint8_t>(right));
+}
+
+constexpr inline FlashSettings operator ^(FlashSettings left, FlashSettings right) {
+	return static_cast<FlashSettings>(static_cast<uint8_t>(left) ^ static_cast<uint8_t>(right));
+}
+
+inline FlashSettings & operator |=(FlashSettings & left, FlashSettings right) {
+	left = (left | right);
+	return left;
+}
+
+inline FlashSettings & operator &=(FlashSettings & left, FlashSettings right) {
+	left = (left & right);
+	return left;
+}
+
+inline FlashSettings & operator ^=(FlashSettings & left, FlashSettings right) {
+	left = (left ^ right);
+	return left;
+}

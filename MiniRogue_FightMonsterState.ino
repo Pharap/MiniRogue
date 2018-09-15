@@ -54,7 +54,7 @@ enum class FightMonster_ViewState : uint8_t {
   ItemHealingUsed
 };
 
-enum class SelectedElement : int8_t {
+enum class FightMonster_SelectedElement : int8_t {
   None = -1,
   ItemFire,
   ItemIce,
@@ -68,14 +68,14 @@ enum class SelectedElement : int8_t {
 };
 
 
-FightMonster_ViewState viewState = FightMonster_ViewState::RollDice;
-FightMonster_ViewState nextState = FightMonster_ViewState::RollDice;
-FightMonster_ViewState lastState = FightMonster_ViewState::RollDice;
+FightMonster_ViewState fightMonster_ViewState = FightMonster_ViewState::RollDice;
+FightMonster_ViewState fightMonster_NextState = FightMonster_ViewState::RollDice;
+FightMonster_ViewState fightMonster_LastState = FightMonster_ViewState::RollDice;
 
 MonsterStats monsterStats;
 
-SelectedElement selectedElement = SelectedElement::None;
-uint8_t dice[4];
+FightMonster_SelectedElement fightMonster_SelectedElement = FightMonster_SelectedElement::None;
+uint8_t dices[4];
 uint8_t dice_Sixes[4];
 uint8_t diceMonster = 0;
 
@@ -84,36 +84,116 @@ uint8_t ice = 0;
 bool dice_Retain[4];
 bool poison = false;
 
+/*SJH
+
+// ----------------------------------------------------------------------------
+//  Get the previous dice selection.  Dices need to be 6 to select ..
+//
+FightMonster_SelectedElement prevDiceSelection(FightMonster_SelectedElement element) {
+
+	if (element > FightMonster_SelectedElement::Dice4 && dices[3] == 6) 							{ return FightMonster_SelectedElement::Dice4; }
+	if (element > FightMonster_SelectedElement::Dice3 && dices[2] == 6) 							{ return FightMonster_SelectedElement::Dice3; }
+	if (element > FightMonster_SelectedElement::Dice2 && dices[1] == 6) 							{ return FightMonster_SelectedElement::Dice2; }
+	if (element > FightMonster_SelectedElement::Dice1 && dices[0] == 6) 							{ return FightMonster_SelectedElement::Dice1; }
+
+	return element;
+
+}
+
+
+// ----------------------------------------------------------------------------
+//  Get the next dice or action selection.  Dices need to be 6 to select ..
+//
+FightMonster_SelectedElement nextDiceSelection(FightMonster_SelectedElement element) {
+
+	if (element < FightMonster_SelectedElement::Dice1 && dices[0] == 6) 							{ return FightMonster_SelectedElement::Dice1; }
+	if (element < FightMonster_SelectedElement::Dice2 && dices[1] == 6) 							{ return FightMonster_SelectedElement::Dice2; }
+	if (element < FightMonster_SelectedElement::Dice3 && dices[2] == 6) 							{ return FightMonster_SelectedElement::Dice3; }
+	if (element < FightMonster_SelectedElement::Dice4 && dices[3] == 6) 							{ return FightMonster_SelectedElement::Dice4; }
+	if (element < FightMonster_SelectedElement::Action) 															{ return FightMonster_SelectedElement::Action; }
+
+	return element;
+
+}
+
+
+// ----------------------------------------------------------------------------
+//  Get the previous wand selection ..
+//
+FightMonster_SelectedElement prevWandSelection(FightMonster_SelectedElement element) {
+
+	if (element > FightMonster_SelectedElement::ItemHealing && playerStats.items[static_cast<uint8_t>(Wand::Healing)] > 0) 	{ return FightMonster_SelectedElement::ItemHealing; }
+	if (element > FightMonster_SelectedElement::ItemFire && playerStats.items[static_cast<uint8_t>(Wand::Fire)] > 0) 				{ return FightMonster_SelectedElement::ItemFire; }
+	if (element > FightMonster_SelectedElement::ItemIce && playerStats.items[static_cast<uint8_t>(Wand::Ice)] > 0) 					{ return FightMonster_SelectedElement::ItemIce; }
+	if (element > FightMonster_SelectedElement::ItemPoison && playerStats.items[static_cast<uint8_t>(Wand::Poison)] > 0) 		{ return FightMonster_SelectedElement::ItemPoison; }
+
+	return element;
+
+}
+
+
+// ----------------------------------------------------------------------------
+//  Get the next wand or action selection ..
+//
+FightMonster_SelectedElement nextWandSelection(FightMonster_SelectedElement element) {
+
+	if (element < FightMonster_SelectedElement::ItemHealing && playerStats.items[static_cast<uint8_t>(Wand::Healing)] > 0) 	{ return FightMonster_SelectedElement::ItemHealing; }
+	if (element < FightMonster_SelectedElement::ItemFire && playerStats.items[static_cast<uint8_t>(Wand::Fire)] > 0) 				{ return FightMonster_SelectedElement::ItemFire; }
+	if (element < FightMonster_SelectedElement::ItemIce && playerStats.items[static_cast<uint8_t>(Wand::Ice)] > 0) 					{ return FightMonster_SelectedElement::ItemIce; }
+	if (element < FightMonster_SelectedElement::ItemPoison && playerStats.items[static_cast<uint8_t>(Wand::Poison)] > 0) 		{ return FightMonster_SelectedElement::ItemPoison; }
+	if (element < FightMonster_SelectedElement::Action) 																																		{ return FightMonster_SelectedElement::Action; }
+
+	return element;
+
+}
+*/
 
 // ----------------------------------------------------------------------------
 //  Initialise state ..
 //
 void FightMonsterState_activate() {
 
+	counter = 0;
+	diceMonster = 0;
+	ice = 0;
+	poison = false;
+
+  fightMonster_ViewState = FightMonster_ViewState::RollDice;
+  fightMonster_NextState = FightMonster_ViewState::RollDice;
+  fightMonster_LastState = FightMonster_ViewState::RollDice;
+	fightMonster_SelectedElement = FightMonster_SelectedElement::None;
+
+	for (uint8_t i = 0; i < 4; i++) {
+
+		dices[i] = 0;
+		dice_Retain[i]= false;
+
+	}
+
 	setDiceSelection(false);
 
 	switch (currentState) {
 
 		case GameStateType::Monster:
-			this->monsterStats.hp = (gameStats.level + 1) + random(1, 7); 
-			this->monsterStats.dmg = gameStats.getMonsterDMG();
+			monsterStats.hp = (gameStats.level + 1) + random(1, 7); 
+			monsterStats.dmg = gameStats.getMonsterDMG();
 			break;
 
 		case GameStateType::BossMonster:
-			this->monsterStats.hp = 10 + (gameStats.getAreaId() * 5);
-			this->monsterStats.dmg = gameStats.getBossMonsterDMG();
+			monsterStats.hp = 10 + (gameStats.getAreaId() * 5);
+			monsterStats.dmg = gameStats.getBossMonsterDMG();
 			break;
 
 		case GameStateType::MonsterFromEvent:
-			this->monsterStats.hp = (gameStats.level + 1) * 2;
-			this->monsterStats.dmg = 5;
+			monsterStats.hp = (gameStats.level + 1) * 2;
+			monsterStats.dmg = 5;
 			break;
 
 		default: break;
 
 	}
 
-	nextState = FightMonster_ViewState::RollDice;
+	fightMonster_NextState = FightMonster_ViewState::RollDice;
 
 }
 
@@ -125,7 +205,7 @@ void FightMonsterState_update() {
 
   auto justPressed = arduboy.justPressedButtons();
 
-	switch (this->viewState) {
+	switch (fightMonster_ViewState) {
 
 		case FightMonster_ViewState::HighlightMonsterStats:
 		case FightMonster_ViewState::HighlightPlayerStats:
@@ -139,7 +219,7 @@ void FightMonsterState_update() {
 				if (counter == FLASH_COUNTER) {
 
 					counter = 0;
-					this->viewState = nextState;
+					fightMonster_ViewState = fightMonster_NextState;
 					arduboy.resetFrameCount();
 
 				}
@@ -149,14 +229,14 @@ void FightMonsterState_update() {
 
 		case FightMonster_ViewState::RollDice:
 
-			this->lastState = FightMonster_ViewState::RollDice;
+			fightMonster_LastState = FightMonster_ViewState::RollDice;
 
 			if (justPressed & A_BUTTON) { 
 
 				counter = sizeof(DiceDelay); 
 
 				for (uint8_t i = 0; i < playerStats.xpTrack; i++) {
-					if (!dice_Retain[i]) dice[i] = random(1, 7);
+					if (!dice_Retain[i]) dices[i] = random(1, 7);
 				}
 
 			}
@@ -166,7 +246,7 @@ void FightMonsterState_update() {
 				if (arduboy.everyXFrames(pgm_read_byte(&DiceDelay[counter]))) {
 
 					for (uint8_t i = 0; i < playerStats.xpTrack; i++) {
-						if (!dice_Retain[i]) dice[i] = random(1, 7);
+						if (!dice_Retain[i]) dices[i] = random(1, 7);
 					}
 
 					counter++;
@@ -180,40 +260,40 @@ void FightMonsterState_update() {
 
 				// Highlight first available dice option ..
 
-				this->selectedElement = SelectedElement::ItemPoison;
-				this->selectedElement = nextDiceSelection(this->selectedElement);
+				fightMonster_SelectedElement = FightMonster_SelectedElement::ItemPoison;
+				//SJH fightMonster_SelectedElement = nextDiceSelection(fightMonster_SelectedElement);
 
 				setDiceSelection(true); 
-				this->viewState = FightMonster_ViewState::DiceSelection;
+				fightMonster_ViewState = FightMonster_ViewState::DiceSelection;
 
 			}
 			break;
 
 		case FightMonster_ViewState::DiceSelection:
-
-			if (justPressed & LEFT_BUTTON) 		{ this->selectedElement = prevDiceSelection(this->selectedElement); }
-			if (justPressed & RIGHT_BUTTON)		{ this->selectedElement = nextDiceSelection(this->selectedElement); }
+//SJH
+			// if (justPressed & LEFT_BUTTON) 		{ fightMonster_SelectedElement = prevDiceSelection(fightMonster_SelectedElement); }
+			// if (justPressed & RIGHT_BUTTON)		{ fightMonster_SelectedElement = nextDiceSelection(fightMonster_SelectedElement); }
 			
 			if (justPressed & A_BUTTON) {
 
-				switch (this->selectedElement) {
+				switch (fightMonster_SelectedElement) {
 
-					case SelectedElement::Dice1 ... SelectedElement::Dice4:
+					case FightMonster_SelectedElement::Dice1 ... FightMonster_SelectedElement::Dice4:
 
 						counter = 0;
-						dice_Retain[static_cast<uint8_t>(this->selectedElement) - 4] = false;
-						dice_Sixes[static_cast<uint8_t>(this->selectedElement) - 4]++;
-						this->viewState = FightMonster_ViewState::RollDice;
+						dice_Retain[static_cast<uint8_t>(fightMonster_SelectedElement) - 4] = false;
+						dice_Sixes[static_cast<uint8_t>(fightMonster_SelectedElement) - 4]++;
+						fightMonster_ViewState= FightMonster_ViewState::RollDice;
 						break;
 
-					case SelectedElement::Action:
+					case FightMonster_SelectedElement::Action:
 						{
 							uint8_t dmg = getMonsterDMG();
 
-							this->monsterStats.hp = clamp(this->monsterStats.hp - dmg, 0, 30);	
+							monsterStats.hp = clamp(monsterStats.hp - dmg, 0, 30);	
 							setDiceSelection(false);
 
-							if (this->monsterStats.hp == 0) { 
+							if (monsterStats.hp == 0) { 
 
 								monsterIsDead();
 
@@ -221,26 +301,26 @@ void FightMonsterState_update() {
 							else {
 								
 								counter = 0;
-								this->lastState = FightMonster_ViewState::DiceSelection;
-								this->selectedElement = SelectedElement::Action;
+								fightMonster_LastState= FightMonster_ViewState::DiceSelection;
+								fightMonster_SelectedElement = FightMonster_SelectedElement::Action;
 
 								if (dmg != 0) {
 
-									this->viewState = FightMonster_ViewState::HighlightMonsterStats;
+									fightMonster_ViewState = FightMonster_ViewState::HighlightMonsterStats;
 
 									if (playerStats.itemCount() == 0) {
 
-										if (this->ice == 0) {
-											this->nextState = FightMonster_ViewState::Defend;
+										if (ice == 0) {
+											fightMonster_NextState = FightMonster_ViewState::Defend;
 										}
 										else {
-											this->nextState = FightMonster_ViewState::RollDice;
+											fightMonster_NextState = FightMonster_ViewState::RollDice;
 										}
 										
 									}
 									else {
 
-										this->nextState = FightMonster_ViewState::WandSelection;
+										fightMonster_NextState = FightMonster_ViewState::WandSelection;
 
 									}
 
@@ -249,17 +329,17 @@ void FightMonsterState_update() {
 
 									if (playerStats.itemCount() == 0) {
 
-										if (this->ice == 0) {
-											this->viewState = FightMonster_ViewState::Defend;
+										if (ice == 0) {
+											fightMonster_ViewState = FightMonster_ViewState::Defend;
 										}
 										else {
-											this->viewState = FightMonster_ViewState::RollDice;
+											fightMonster_ViewState = FightMonster_ViewState::RollDice;
 										}
 
 									}
 									else {
 
-										this->viewState = FightMonster_ViewState::WandSelection;
+										fightMonster_ViewState = FightMonster_ViewState::WandSelection;
 
 									}
 
@@ -280,58 +360,58 @@ void FightMonsterState_update() {
 
 		case FightMonster_ViewState::WandSelection:
 
-			this->lastState = FightMonster_ViewState::WandSelection;
-	
-			if (justPressed & UP_BUTTON || justPressed & LEFT_BUTTON) 			{ this->selectedElement = prevWandSelection(this->selectedElement); }
-			if (justPressed & DOWN_BUTTON || justPressed & RIGHT_BUTTON) 		{ this->selectedElement = nextWandSelection(this->selectedElement); }
+			fightMonster_LastState = FightMonster_ViewState::WandSelection;
+	//SJH
+			// if (justPressed & UP_BUTTON || justPressed & LEFT_BUTTON) 			{ fightMonster_SelectedElement = prevWandSelection(fightMonster_SelectedElement); }
+			// if (justPressed & DOWN_BUTTON || justPressed & RIGHT_BUTTON) 		{ fightMonster_SelectedElement = nextWandSelection(fightMonster_SelectedElement); }
 			
 			if (justPressed & A_BUTTON) {
 
-				switch (this->selectedElement) {
+				switch (fightMonster_SelectedElement) {
 
-					case SelectedElement::ItemFire:
+					case FightMonster_SelectedElement::ItemFire:
 
 						playerStats.items[static_cast<uint8_t>(Wand::Fire)]--;
-						this->monsterStats.hp = clamp(this->monsterStats.hp - 10, 0, 30);	
+						monsterStats.hp = clamp(monsterStats.hp - 10, 0, 30);	
 						setDiceSelection(false);
 
-						if (this->monsterStats.hp == 0) { 
+						if (monsterStats.hp == 0) { 
 
 							monsterIsDead();
 
 						}
 						else {
 
-							this->lastState = FightMonster_ViewState::WandSelection;
-							this->viewState = FightMonster_ViewState::ItemFireUsed;
+							fightMonster_LastState = FightMonster_ViewState::WandSelection;
+							fightMonster_ViewState = FightMonster_ViewState::ItemFireUsed;
 
 						}
 						break;
 
-					case SelectedElement::ItemIce:
-						this->ice = 1;
-						this->viewState = FightMonster_ViewState::ItemIceUsed;
+					case FightMonster_SelectedElement::ItemIce:
+						ice = 1;
+						fightMonster_ViewState = FightMonster_ViewState::ItemIceUsed;
 						playerStats.items[static_cast<uint8_t>(Wand::Ice)]--;
 						break;
 
-					case SelectedElement::ItemPoison:
-						this->poison = true;
-						this->viewState = FightMonster_ViewState::ItemPoisonUsed;
+					case FightMonster_SelectedElement::ItemPoison:
+						poison = true;
+						fightMonster_ViewState = FightMonster_ViewState::ItemPoisonUsed;
 						playerStats.items[static_cast<uint8_t>(Wand::Poison)]--;
 						break;
 
-					case SelectedElement::ItemHealing:
-						this->viewState = FightMonster_ViewState::ItemHealingUsed;
+					case FightMonster_SelectedElement::ItemHealing:
+						fightMonster_ViewState = FightMonster_ViewState::ItemHealingUsed;
 						playerStats.items[static_cast<uint8_t>(Wand::Healing)]--;
 						playerStats.incHP(8);
 						break;
 
 					default: 
-						if (this->ice == 0) {
-							this->viewState = FightMonster_ViewState::Defend;
+						if (ice == 0) {
+							fightMonster_ViewState = FightMonster_ViewState::Defend;
 						}
 						else {
-							this->viewState = FightMonster_ViewState::RollDice;
+							fightMonster_ViewState = FightMonster_ViewState::RollDice;
 						}
 						break;
 
@@ -343,19 +423,19 @@ void FightMonsterState_update() {
 
 		case FightMonster_ViewState::Defend:
 
-			playerStats.decHP(clamp(this->monsterStats.dmg - playerStats.armour, 0, 50));
+			playerStats.decHP(clamp(monsterStats.dmg - playerStats.armour, 0, 50));
 
 			if (playerStats.hp == 0) {
 
-				this->viewState = FightMonster_ViewState::HighlightPlayerStats;
-				this->nextState = FightMonster_ViewState::PlayerDead;
+				fightMonster_ViewState = FightMonster_ViewState::HighlightPlayerStats;
+				fightMonster_NextState = FightMonster_ViewState::PlayerDead;
 
 			}
 			else {
 
 				setDiceSelection(false);
-				this->viewState = FightMonster_ViewState::HighlightPlayerStats;
-				this->nextState = FightMonster_ViewState::RollDice;
+				fightMonster_ViewState = FightMonster_ViewState::HighlightPlayerStats;
+				fightMonster_NextState = FightMonster_ViewState::RollDice;
 			}
 			
 			break;
@@ -373,8 +453,8 @@ void FightMonsterState_update() {
 
 				if (counter == FLASH_COUNTER) {
 
-					this->lastState = this->viewState;
-					this->viewState = FightMonster_ViewState::MonsterDead_Wait;
+					fightMonster_LastState = fightMonster_ViewState;
+					fightMonster_ViewState = FightMonster_ViewState::MonsterDead_Wait;
 
 				}
 
@@ -404,7 +484,7 @@ void FightMonsterState_update() {
 		case FightMonster_ViewState::ItemIceUsed:
 
 			if (justPressed & A_BUTTON) {
-				this->viewState = FightMonster_ViewState::RollDice;
+				fightMonster_ViewState = FightMonster_ViewState::RollDice;
 			}
 
 			break;
@@ -414,7 +494,7 @@ void FightMonsterState_update() {
 		case FightMonster_ViewState::ItemHealingUsed:
 
 			if (justPressed & A_BUTTON) {
-				this->viewState = FightMonster_ViewState::Defend;
+				fightMonster_ViewState = FightMonster_ViewState::Defend;
 			}
 
 			break;
@@ -464,7 +544,7 @@ void monsterIsDead() {
 
 	}
 
-	this->viewState = FightMonster_ViewState::MonsterDead;
+	fightMonster_ViewState = FightMonster_ViewState::MonsterDead;
 	
 }
 
@@ -472,7 +552,7 @@ void monsterIsDead() {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void render() {
+void FightMonsterState_render() {
 
 	bool flash = arduboy.getFrameCountHalf(20);
 
@@ -515,23 +595,23 @@ void render() {
 	// Monster statistics ..
 	{
 
-		if (this->viewState == FightMonster_ViewState::HighlightMonsterStats && flash) {
+		if (fightMonster_ViewState== FightMonster_ViewState::HighlightMonsterStats && flash) {
 			font3x5.setTextColor(BLACK);
-			arduboy.fillRect(20, 2, (this->monsterStats.hp < 10 ? 5 : 10), 7, WHITE);
+			arduboy.fillRect(20, 2, (monsterStats.hp < 10 ? 5 : 10), 7, WHITE);
 		}
 
 		font3x5.setCursor(21, 2);
-		font3x5.print(this->monsterStats.hp);
+		font3x5.print(monsterStats.hp);
 		font3x5.setTextColor(WHITE);
 		font3x5.setCursor(21, 10);
-		font3x5.print(this->monsterStats.dmg);
+		font3x5.print(monsterStats.dmg);
 
 	}
 
 
 	// Inventory ..
 
-	if (viewState == FightMonster_ViewState::WandSelection || lastState == FightMonster_ViewState::WandSelection) {
+	if (fightMonster_ViewState == FightMonster_ViewState::WandSelection || fightMonster_LastState == FightMonster_ViewState::WandSelection) {
 
 		ardBitmap.drawCompressed(0, 19, Images::Monster_Items_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 
@@ -544,30 +624,27 @@ void render() {
 		font3x5.setCursor(21, 53);
 		font3x5.print(playerStats.items[static_cast<uint8_t>(Wand::Healing)]);
 
-		//if (this->ice > 0) 	arduboy.drawVerticalDottedLine(32, 35 + (this->ice * 3), 0, 2); 
-		//if (this->poison) 	arduboy.drawVerticalDottedLine(42, 51, 0, 2); 
-
 	}
 
 
 	// Dice ..
 
-	if (viewState == FightMonster_ViewState::DiceSelection || viewState == FightMonster_ViewState::RollDice || lastState == FightMonster_ViewState::DiceSelection) {
+	if (fightMonster_ViewState == FightMonster_ViewState::DiceSelection || fightMonster_ViewState == FightMonster_ViewState::RollDice || fightMonster_LastState == FightMonster_ViewState::DiceSelection) {
 		for (uint8_t i = 0; i < playerStats.xpTrack; i++) {
-			SpritesB::drawOverwrite(3 + (i * 10), 52, Images::Dice, dice[i]);
+			SpritesB::drawOverwrite(3 + (i * 10), 52, Images::Dice, dices[i]);
 		}
 	}
 
 
 	// Marker ..
 	
-	if ((this->selectedElement == SelectedElement::Action && flash) || (this->selectedElement != SelectedElement::Action)) {
+	if ((fightMonster_SelectedElement == FightMonster_SelectedElement::Action && flash) || (fightMonster_SelectedElement != FightMonster_SelectedElement::Action)) {
 
 		uint8_t x = 0;
 		uint8_t y = 0;
 
-		if (this->viewState == FightMonster_ViewState::DiceSelection) 			{	x = 3 + (playerStats.xpTrack * 10);	y = 53;	}
-		if (this->viewState == FightMonster_ViewState::WandSelection) 			{ x = 26; y = 53;	}
+		if (fightMonster_ViewState == FightMonster_ViewState::DiceSelection) 			{	x = 3 + (playerStats.xpTrack * 10);	y = 53;	}
+		if (fightMonster_ViewState == FightMonster_ViewState::WandSelection) 			{ x = 26; y = 53;	}
 
 		if (x > 0) SpritesB::drawOverwrite(x, y, Images::Marker, 0);
 
@@ -577,22 +654,22 @@ void render() {
 	// Highlighted item ..
 	{
 
-		if (this->viewState == FightMonster_ViewState::DiceSelection || this->viewState == FightMonster_ViewState::WandSelection) {
+		if (fightMonster_ViewState== FightMonster_ViewState::DiceSelection || fightMonster_ViewState == FightMonster_ViewState::WandSelection) {
 
 		  if (!flash) {
 			
 				uint8_t x = 0;
 				uint8_t y = 0;
 
-				switch (this->selectedElement) {
+				switch (fightMonster_SelectedElement) {
 
-					case SelectedElement::ItemFire ... SelectedElement::ItemHealing:
+					case FightMonster_SelectedElement::ItemFire ... FightMonster_SelectedElement::ItemHealing:
 						x = 3;
-						y = 22 + (static_cast<uint8_t>(this->selectedElement) * 10);
+						y = 22 + (static_cast<uint8_t>(fightMonster_SelectedElement) * 10);
 						break;
 
-					case SelectedElement::Dice1 ... SelectedElement::Dice4:
-						x = 3 + ((static_cast<uint8_t>(this->selectedElement) - 4) * 10);
+					case FightMonster_SelectedElement::Dice1 ... FightMonster_SelectedElement::Dice4:
+						x = 3 + ((static_cast<uint8_t>(fightMonster_SelectedElement) - 4) * 10);
 						y = 52;
 						break;
 
@@ -611,18 +688,18 @@ void render() {
 
 	// Player statistics ..
 
-	const FlashSettings settings = ((this->viewState == FightMonster_ViewState::HighlightPlayerStats) ? FlashSettings::FlashHP : FlashSettings::None);
+	const FlashSettings settings = ((fightMonster_ViewState == FightMonster_ViewState::HighlightPlayerStats) ? FlashSettings::FlashHP : FlashSettings::None);
 
 	renderPlayerStatistics(true, settings);
 
 
 	// Messages ..
 
-	switch (this->viewState) {
+	switch (fightMonster_ViewState) {
 
 		case FightMonster_ViewState::HighlightPlayerStats:
 	
-			if (this->nextState == FightMonster_ViewState::PlayerDead) {
+			if (fightMonster_NextState == FightMonster_ViewState::PlayerDead) {
 				renderPlayerDead();
 			}
 
@@ -631,7 +708,7 @@ void render() {
 		case FightMonster_ViewState::MonsterDead:
 		case FightMonster_ViewState::MonsterDead_Wait:
 
-			if (this->viewState != FightMonster_ViewState::MonsterDead_Wait) {
+			if (fightMonster_ViewState != FightMonster_ViewState::MonsterDead_Wait) {
 
 				FlashSettings settings = FlashSettings::FlashXP;
 
@@ -673,7 +750,7 @@ void render() {
 
    	 	renderMessageBox(15, 17, 100, 32);
 			font3x5.setCursor(20, 21);
-			font3x5.print(FlashString(itemUsed_Captions[ static_cast<uint8_t>(this->viewState) - static_cast<uint8_t>(FightMonster_ViewState::ItemIceUsed) ]));
+			font3x5.print(FlashString(itemUsed_Captions[ static_cast<uint8_t>(fightMonster_ViewState) - static_cast<uint8_t>(FightMonster_ViewState::ItemIceUsed) ]));
 			break;
 
 		default: break;
@@ -685,68 +762,6 @@ void render() {
 
 
 // ----------------------------------------------------------------------------
-//  Get the previous dice selection.  Dices need to be 6 to select ..
-//
-SelectedElement prevDiceSelection(SelectedElement element) {
-
-	if (element > SelectedElement::Dice4 && dice[3] == 6) 							{ return SelectedElement::Dice4; }
-	if (element > SelectedElement::Dice3 && dice[2] == 6) 							{ return SelectedElement::Dice3; }
-	if (element > SelectedElement::Dice2 && dice[1] == 6) 							{ return SelectedElement::Dice2; }
-	if (element > SelectedElement::Dice1 && dice[0] == 6) 							{ return SelectedElement::Dice1; }
-
-	return element;
-
-}
-
-
-// ----------------------------------------------------------------------------
-//  Get the next dice or action selection.  Dices need to be 6 to select ..
-//
-SelectedElement nextDiceSelection(SelectedElement element) {
-
-	if (element < SelectedElement::Dice1 && dice[0] == 6) 							{ return SelectedElement::Dice1; }
-	if (element < SelectedElement::Dice2 && dice[1] == 6) 							{ return SelectedElement::Dice2; }
-	if (element < SelectedElement::Dice3 && dice[2] == 6) 							{ return SelectedElement::Dice3; }
-	if (element < SelectedElement::Dice4 && dice[3] == 6) 							{ return SelectedElement::Dice4; }
-	if (element < SelectedElement::Action) 																		{ return SelectedElement::Action; }
-
-	return element;
-
-}
-
-
-// ----------------------------------------------------------------------------
-//  Get the previous wand selection ..
-//
-SelectedElement prevWandSelection(SelectedElement element) {
-
-	if (element > SelectedElement::ItemHealing && playerStats.items[static_cast<uint8_t>(Wand::Healing)] > 0) 	{ return SelectedElement::ItemHealing; }
-	if (element > SelectedElement::ItemFire && playerStats.items[static_cast<uint8_t>(Wand::Fire)] > 0) 				{ return SelectedElement::ItemFire; }
-	if (element > SelectedElement::ItemIce && playerStats.items[static_cast<uint8_t>(Wand::Ice)] > 0) 					{ return SelectedElement::ItemIce; }
-	if (element > SelectedElement::ItemPoison && playerStats.items[static_cast<uint8_t>(Wand::Poison)] > 0) 		{ return SelectedElement::ItemPoison; }
-
-	return element;
-
-}
-
-
-// ----------------------------------------------------------------------------
-//  Get the next wand or action selection ..
-//
-SelectedElement nextWandSelection(SelectedElement element) {
-
-	if (element < SelectedElement::ItemHealing && playerStats.items[static_cast<uint8_t>(Wand::Healing)] > 0) 	{ return SelectedElement::ItemHealing; }
-	if (element < SelectedElement::ItemFire && playerStats.items[static_cast<uint8_t>(Wand::Fire)] > 0) 				{ return SelectedElement::ItemFire; }
-	if (element < SelectedElement::ItemIce && playerStats.items[static_cast<uint8_t>(Wand::Ice)] > 0) 					{ return SelectedElement::ItemIce; }
-	if (element < SelectedElement::ItemPoison && playerStats.items[static_cast<uint8_t>(Wand::Poison)] > 0) 		{ return SelectedElement::ItemPoison; }
-	if (element < SelectedElement::Action) 																																			{ return SelectedElement::Action; }
-
-	return element;
-
-}
-
-
-// ----------------------------------------------------------------------------
 //  Get the damage inflicted on the monster this roll of the dice ..
 //
 uint8_t getMonsterDMG() {
@@ -754,8 +769,8 @@ uint8_t getMonsterDMG() {
 	uint8_t damage = 0;
 
 	for (uint8_t i = 0; i < playerStats.xpTrack; i++) {
-		if (dice[i] != 1) {
-			damage = damage + dice[i] + (dice_Sixes[i] * 6);
+		if (dices[i] != 1) {
+			damage = damage + dices[i] + (dice_Sixes[i] * 6);
 		}
 	}
 
@@ -775,7 +790,7 @@ void  setDiceSelection(bool value) {
 
 		if (!value) {
 			dice_Sixes[i] = 0;
-			if (this->ice > 0) this->ice--;
+			if (ice > 0) ice--;
 		}
 
 	}

@@ -18,9 +18,9 @@ enum class GameOver_ViewState : uint8_t {
   HighScore
 };
 
-GameOver_ViewState viewState = GameOver_ViewState::PlayerDead;
+GameOver_ViewState gameOver_ViewState = GameOver_ViewState::PlayerDead;
 uint8_t score = 123;
-uint8_t highScore = 456;
+uint8_t highScore = 146;
 
 #define EEPROM_START                  EEPROM_STORAGE_SPACE_START + 130
 #define EEPROM_START_C1               EEPROM_START
@@ -33,37 +33,39 @@ uint8_t highScore = 456;
 //
 void GameOverState_activate() {
 	
+	initEEPROM(false);
+
 	switch (currentState) {
 
 		case GameStateType::PlayerDead:
-			viewState = GameOver_ViewState::PlayerDead; 
+			gameOver_ViewState = GameOver_ViewState::PlayerDead; 
 			break;
 
 		case GameStateType::Winner:
-			viewState = GameOver_ViewState::Winner; 
+			gameOver_ViewState = GameOver_ViewState::Winner; 
 			break;
 
 		default: break;
 
 	}
 
-	this->score = 0;
-	this->score += (gameStats.skillLevel * 3);
-	this->score += (playerStats.xpTrack * 2);
-	this->score += ((gameStats.level + 1) * 3);
-	this->score += (playerStats.hp * 2);
-	this->score += (playerStats.food);
-	this->score += (playerStats.armour);
-	this->score += (playerStats.gold * 2);
-	this->score += (playerStats.bossesKilled * 2);
-	this->score += (playerStats.itemCount());
+	score = 0;
+	score += (gameStats.skillLevel * 3);
+	score += (playerStats.xpTrack * 2);
+	score += ((gameStats.level + 1) * 3);
+	score += (playerStats.hp * 2);
+	score += (playerStats.food);
+	score += (playerStats.armour);
+	score += (playerStats.gold * 2);
+	score += (playerStats.bossesKilled * 2);
+	score += (playerStats.itemCount());
 
-	this->highScore = EEPROM.read(EEPROM_SCORE);
+	highScore = EEPROM.read(EEPROM_SCORE);
 
-	if (this->score > this->highScore) {
+	if (score > highScore) {
 
-		this->highScore = this->score;
-		EEPROM.update(EEPROM_SCORE, this->score);
+		highScore = score;
+		EEPROM.update(EEPROM_SCORE, score);
 
 	}
 
@@ -79,11 +81,11 @@ void GameOverState_update() {
 
   if (justPressed & A_BUTTON) { 
 		
-		switch (this->viewState) {
+		switch (gameOver_ViewState) {
 
 			case GameOver_ViewState::PlayerDead:
 			case GameOver_ViewState::Winner: 
-				viewState = GameOver_ViewState::HighScore; 
+				gameOver_ViewState = GameOver_ViewState::HighScore; 
 				break;
 
 			case GameOver_ViewState::HighScore:
@@ -102,9 +104,9 @@ void GameOverState_update() {
 //
 void GameOverState_render() {
 
-	renderTitleBackground(viewState != GameOver_ViewState::HighScore);
+	renderTitleBackground(gameOver_ViewState != GameOver_ViewState::HighScore);
 
-	switch (this->viewState) {
+	switch (gameOver_ViewState) {
 
 		case GameOver_ViewState::PlayerDead:
 			ardBitmap.drawCompressed(29, 21, Images::Title_Game_Over_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
@@ -136,9 +138,9 @@ void GameOverState_render() {
 				renderTwoDigitNumeric(playerStats.itemCount());
 
 				font3x5.setCursor(95, 20);
-				renderThreeDigitNumeric(this->score);
+				renderThreeDigitNumeric(score);
 				font3x5.setCursor(95, 29);
-				renderThreeDigitNumeric(this->highScore);
+				renderThreeDigitNumeric(highScore);
 
 			}
 			break;
@@ -149,7 +151,7 @@ void GameOverState_render() {
 
 }
 
-void GameOverState_renderTwoDigitNumeric(uint8_t val) { 
+void renderTwoDigitNumeric(uint8_t val) { 
 
 	if (val < 10) font3x5.print(F("0"));
 	font3x5.print(val);
@@ -157,7 +159,7 @@ void GameOverState_renderTwoDigitNumeric(uint8_t val) {
 
 }
 
-void GameOverState_renderThreeDigitNumeric(uint8_t val) { 
+void renderThreeDigitNumeric(uint8_t val) { 
 
 	if (val < 100) font3x5.print(F("0"));
 	if (val < 10) font3x5.print(F("0"));
@@ -179,7 +181,7 @@ void GameOverState_renderThreeDigitNumeric(uint8_t val) {
 const uint8_t letter1 = 'M'; 
 const uint8_t letter2 = 'R'; 
 
-void GameOverState_initEEPROM(bool forceClear) {
+void initEEPROM(bool forceClear) {
 
   byte c1 = EEPROM.read(EEPROM_START_C1);
   byte c2 = EEPROM.read(EEPROM_START_C2);

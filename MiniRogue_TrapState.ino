@@ -11,10 +11,19 @@ enum class Trap_ViewState : uint8_t {
 };
 
 
-Trap_ViewState viewState = Trap_ViewState::SkillCheck;
+Trap_ViewState trap_ViewState = Trap_ViewState::SkillCheck;
 
 
-constexpr const static uint8_t NO_OF_CARDS_IN_FLIP = 13; 
+// ----------------------------------------------------------------------------
+//  Initialise state ..
+//
+void TrapState_activate() {
+
+	counter = 0;
+  dice = 0;
+  trap_ViewState = Trap_ViewState::SkillCheck;
+
+}
 
 
 // ----------------------------------------------------------------------------
@@ -24,7 +33,7 @@ void TrapState_update() {
 
   auto justPressed = arduboy.justPressedButtons();
 
-  switch (this->viewState) {
+  switch (trap_ViewState) {
 
     case Trap_ViewState::SkillCheckResult:
 
@@ -47,7 +56,7 @@ void TrapState_update() {
           else {
 
             counter = 0;
-            this->viewState = Trap_ViewState::RollDice;
+            trap_ViewState = Trap_ViewState::RollDice;
 
           }
 
@@ -59,7 +68,7 @@ void TrapState_update() {
     case Trap_ViewState::SkillCheck:
     case Trap_ViewState::RollDice:
       
-			if (counter < NO_OF_CARDS_IN_FLIP - 1) {
+			if (counter < NO_OF_CARDS_IN_FLIP_13 - 1) {
 
         dice = random(1, 7);
         counter++;
@@ -67,7 +76,7 @@ void TrapState_update() {
 			}
 			else {
 
-        if (this->viewState == Trap_ViewState::RollDice) {
+        if (trap_ViewState == Trap_ViewState::RollDice) {
 
           switch (dice) {
 
@@ -96,12 +105,12 @@ void TrapState_update() {
 
             arduboy.resetFrameCount();
             counter = 0;
-            this->viewState = Trap_ViewState::UpdateStats;
+            trap_ViewState = Trap_ViewState::UpdateStats;
 
           }
           else {
 
-            viewState = Trap_ViewState::PlayerDead;
+            trap_ViewState = Trap_ViewState::PlayerDead;
 
           }
 
@@ -110,7 +119,7 @@ void TrapState_update() {
           
           counter = 0;
           arduboy.resetFrameCount();
-          this->viewState = Trap_ViewState::SkillCheckResult;
+          trap_ViewState = Trap_ViewState::SkillCheckResult;
 
         }
 
@@ -167,7 +176,7 @@ void TrapState_render() {
     ardBitmap.drawCompressed(i, 40, Images::Trap_Single_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
   }
 
-  switch (this->viewState) {
+  switch (trap_ViewState) {
 
     case Trap_ViewState::SkillCheck:
     case Trap_ViewState::SkillCheckResult:
@@ -177,7 +186,7 @@ void TrapState_render() {
       font3x5.setCursor(66, 3);
       SpritesB::drawOverwrite(51, 2, Images::Dice, dice);
 
-      if (viewState == Trap_ViewState::SkillCheckResult) {
+      if (trap_ViewState == Trap_ViewState::SkillCheckResult) {
 
         if (counter < FLASH_COUNTER && flash) font3x5.setTextColor(BLACK);
 
@@ -204,7 +213,7 @@ void TrapState_render() {
 
       renderLargeSpinningCard(28, 8, counter);
 
-      if (counter < NO_OF_CARDS_IN_FLIP) {
+      if (counter < NO_OF_CARDS_IN_FLIP_13) {
 
         if (Images::Large_Spinning_Inlays[counter] > 0) {
           for (uint8_t i = 0, j = 0; i < Images::Large_Spinning_Inlays[counter]; i++, j = j + 2) {
@@ -226,7 +235,7 @@ void TrapState_render() {
       renderLargeSpinningCard(28, 8, 0);
       ardBitmap.drawCompressed(30, 10, Images::Trap_Dice[dice - 1], WHITE, ALIGN_NONE, MIRROR_NONE);
       font3x5.setCursor(4, 0);
-      printTrapName();
+      TrapState_printTrapName();
 
       break;
 
@@ -249,7 +258,7 @@ void TrapState_render() {
 	// Player statistics ..
 
 	const FlashSettings settings = (dice < 6) ? static_cast<FlashSettings>(pgm_read_byte(&diceHelper[dice])) : FlashSettings::None;
-	const bool shouldFlash = (this->viewState == Trap_ViewState::UpdateStats && counter < FLASH_COUNTER);
+	const bool shouldFlash = (trap_ViewState == Trap_ViewState::UpdateStats && counter < FLASH_COUNTER);
 
 	renderPlayerStatistics(shouldFlash, settings);
 
