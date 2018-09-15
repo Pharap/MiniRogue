@@ -5,6 +5,20 @@
 
 #define _DEBUG
 
+enum class FightMonster_SelectedElement : int8_t {
+  None = -1,
+  ItemFire,
+  ItemIce,
+  ItemPoison,
+  ItemHealing,
+  Dice1,
+  Dice2,
+  Dice3,
+  Dice4,
+  Action,
+};
+
+
 constexpr const static uint8_t FLASH_DELAY = 24;
 constexpr const static uint8_t FLASH_COUNTER = 70;
 constexpr const static uint8_t WINNER_LEVEL = 5;

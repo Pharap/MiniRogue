@@ -54,18 +54,18 @@ enum class FightMonster_ViewState : uint8_t {
   ItemHealingUsed
 };
 
-enum class FightMonster_SelectedElement : int8_t {
-  None = -1,
-  ItemFire,
-  ItemIce,
-  ItemPoison,
-  ItemHealing,
-  Dice1,
-  Dice2,
-  Dice3,
-  Dice4,
-  Action,
-};
+// enum class FightMonster_SelectedElement : int8_t {
+//   None = -1,
+//   ItemFire,
+//   ItemIce,
+//   ItemPoison,
+//   ItemHealing,
+//   Dice1,
+//   Dice2,
+//   Dice3,
+//   Dice4,
+//   Action,
+// };
 
 
 FightMonster_ViewState fightMonster_ViewState = FightMonster_ViewState::RollDice;
@@ -78,13 +78,11 @@ FightMonster_SelectedElement fightMonster_SelectedElement = FightMonster_Selecte
 uint8_t dices[4];
 uint8_t dice_Sixes[4];
 uint8_t diceMonster = 0;
+bool dice_Retain[4];
 
 uint8_t ice = 0;
-
-bool dice_Retain[4];
 bool poison = false;
 
-/*SJH
 
 // ----------------------------------------------------------------------------
 //  Get the previous dice selection.  Dices need to be 6 to select ..
@@ -146,7 +144,7 @@ FightMonster_SelectedElement nextWandSelection(FightMonster_SelectedElement elem
 	return element;
 
 }
-*/
+
 
 // ----------------------------------------------------------------------------
 //  Initialise state ..
@@ -261,7 +259,7 @@ void FightMonsterState_update() {
 				// Highlight first available dice option ..
 
 				fightMonster_SelectedElement = FightMonster_SelectedElement::ItemPoison;
-				//SJH fightMonster_SelectedElement = nextDiceSelection(fightMonster_SelectedElement);
+				fightMonster_SelectedElement = nextDiceSelection(fightMonster_SelectedElement);
 
 				setDiceSelection(true); 
 				fightMonster_ViewState = FightMonster_ViewState::DiceSelection;
@@ -270,9 +268,9 @@ void FightMonsterState_update() {
 			break;
 
 		case FightMonster_ViewState::DiceSelection:
-//SJH
-			// if (justPressed & LEFT_BUTTON) 		{ fightMonster_SelectedElement = prevDiceSelection(fightMonster_SelectedElement); }
-			// if (justPressed & RIGHT_BUTTON)		{ fightMonster_SelectedElement = nextDiceSelection(fightMonster_SelectedElement); }
+
+			if (justPressed & LEFT_BUTTON) 		{ fightMonster_SelectedElement = prevDiceSelection(fightMonster_SelectedElement); }
+			if (justPressed & RIGHT_BUTTON)		{ fightMonster_SelectedElement = nextDiceSelection(fightMonster_SelectedElement); }
 			
 			if (justPressed & A_BUTTON) {
 
@@ -361,9 +359,9 @@ void FightMonsterState_update() {
 		case FightMonster_ViewState::WandSelection:
 
 			fightMonster_LastState = FightMonster_ViewState::WandSelection;
-	//SJH
-			// if (justPressed & UP_BUTTON || justPressed & LEFT_BUTTON) 			{ fightMonster_SelectedElement = prevWandSelection(fightMonster_SelectedElement); }
-			// if (justPressed & DOWN_BUTTON || justPressed & RIGHT_BUTTON) 		{ fightMonster_SelectedElement = nextWandSelection(fightMonster_SelectedElement); }
+
+			if (justPressed & UP_BUTTON || justPressed & LEFT_BUTTON) 			{ fightMonster_SelectedElement = prevWandSelection(fightMonster_SelectedElement); }
+			if (justPressed & DOWN_BUTTON || justPressed & RIGHT_BUTTON) 		{ fightMonster_SelectedElement = nextWandSelection(fightMonster_SelectedElement); }
 			
 			if (justPressed & A_BUTTON) {
 
