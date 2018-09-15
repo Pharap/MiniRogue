@@ -1,23 +1,34 @@
-#include "RestingState.h"
-#include "../images/Images.h"
-#include "../utils/Utils.h"
-#include "../utils/Enums.h"
-#include "../fonts/Font3x5.h"
+#include "src/utils/Enums.h"
+#include "src/utils/FadeEffects.h"
+
+  
+enum class Resting_ViewState : uint8_t {
+  SelectReward,
+  UpdateStats,
+};
+
+enum class SelectedItem : uint8_t {
+  Food,
+  Heal,
+  Weapon,
+};
+
+Resting_ViewState viewState = Resting_ViewState::SelectReward;
+SelectedItem selectedItem = SelectedItem::Food;
+SelectedItem prevSelection = SelectedItem::Food;
+
 
 
 // ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
-void RestingState::update(StateMachine & machine) { 
+void RestingState_update() { 
 
-	auto & arduboy = machine.getContext().arduboy;
-	auto & playerStats = machine.getContext().playerStats;
-	auto & gameStats = machine.getContext().gameStats;
   auto justPressed = arduboy.justPressedButtons();
 
   switch (this->viewState) {
 
-    case ViewState::SelectReward:
+    case Resting_ViewState::SelectReward:
 
       if ((justPressed & LEFT_BUTTON) && this->selectedItem == SelectedItem::Weapon)     { this->selectedItem = this->prevSelection; }
       if ((justPressed & RIGHT_BUTTON) && this->selectedItem != SelectedItem::Weapon)    { this->prevSelection = this->selectedItem; this->selectedItem = SelectedItem::Weapon; }
@@ -42,21 +53,21 @@ void RestingState::update(StateMachine & machine) {
 
         }
 
-        this->viewState = ViewState::UpdateStats;
+        this->viewState = Resting_ViewState::UpdateStats;
 
       }
 
       break;
 
-    case ViewState::UpdateStats:
+    case Resting_ViewState::UpdateStats:
 
-      if (this->counter < FLASH_COUNTER) {
+      if (counter < FLASH_COUNTER) {
 
-        this->counter++;
+        counter++;
 
         if (counter == FLASH_COUNTER) {
 
-          machine.changeState(gameStats.incRoom(playerStats)); 
+          currentState = gameStats.incRoom(playerStats); 
 
         }
 
@@ -64,7 +75,7 @@ void RestingState::update(StateMachine & machine) {
 
 			if (justPressed & A_BUTTON) {
 
-        machine.changeState(gameStats.incRoom(playerStats)); 
+        currentState = gameStats.incRoom(playerStats); 
 
       }
 
@@ -78,14 +89,11 @@ void RestingState::update(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void RestingState::render(StateMachine & machine) {
-
-	auto & arduboy = machine.getContext().arduboy;
-  auto & ardBitmap = machine.getContext().ardBitmap;
+void RestingState_render() {
 
   const bool flash = arduboy.getFrameCountHalf(FLASH_DELAY);
 
-  BaseState::renderBackground(machine, false);
+  renderBackground(false);
   ardBitmap.drawCompressed(0, 0, Images::Card_Resting_Large_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 
 
@@ -107,9 +115,9 @@ void RestingState::render(StateMachine & machine) {
 
 	const uint8_t index = static_cast<uint8_t>(this->selectedItem);
 	const FlashSettings settings = static_cast<FlashSettings>(pgm_read_byte(&settingsHelper[index]));
-	const bool shouldFlash = (this->viewState == ViewState::UpdateStats);
+	const bool shouldFlash = (this->viewState == Resting_ViewState::UpdateStats);
 
-	BaseState::renderPlayerStatistics(machine, shouldFlash, settings);
+	renderPlayerStatistics(shouldFlash, settings);
 
   if (flash) {
 

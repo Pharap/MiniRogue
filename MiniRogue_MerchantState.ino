@@ -1,25 +1,43 @@
-#include "MerchantState.h"
-#include "../images/Images.h"
-#include "../utils/Utils.h"
-#include "../utils/Enums.h"
-#include "../fonts/Font3x5.h"
+#include "src/utils/Enums.h"
+#include "src/utils/FadeEffects.h"
+#include "src/fonts/Font3x5.h"
+
+char const error_01[] PROGMEM = "   You need\n  more gold!";
+char const error_02[] PROGMEM = "~You dont have\n one to sell!";
+char const error_03[] PROGMEM = " ~You already\n have enough!";
+
+char const * const error_Captions[] = {
+	error_01,
+	error_02,
+	error_03,
+};
+
+enum class Merchant_ViewState : uint8_t {
+  Buying,
+  Selling,
+};
+
+Merchant_ViewState viewState = Merchant_ViewState::Buying;
+
+uint8_t selectedItem = 0;
+uint8_t errorNumber = 0;
+
+FlashSettings settings;
+
 
 
 // ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
-void MerchantState::update(StateMachine & machine) { 
+void MerchantState_update() { 
 
-	auto & arduboy = machine.getContext().arduboy;
-	auto & playerStats = machine.getContext().playerStats;
-	auto & gameStats = machine.getContext().gameStats;
   auto justPressed = arduboy.justPressedButtons();
 
   if (justPressed > 0) this->errorNumber = 0;
 
   switch (this->viewState) {
 
-    case ViewState::Buying:
+    case Merchant_ViewState::Buying:
 
       if ((justPressed & UP_BUTTON) && this->selectedItem > 0)            this->selectedItem--;
       if ((justPressed & DOWN_BUTTON) && this->selectedItem < 6)          this->selectedItem++;
@@ -120,16 +138,16 @@ void MerchantState::update(StateMachine & machine) {
 
         }
 
-		constexpr FlashSettings flashTest = (FlashSettings::FlashHP | FlashSettings::FlashXP | FlashSettings::FlashFood| FlashSettings::FlashArmour);
+      constexpr FlashSettings flashTest = (FlashSettings::FlashHP | FlashSettings::FlashXP | FlashSettings::FlashFood| FlashSettings::FlashArmour);
 
-		if ((this->settings & flashTest) != FlashSettings::None)
-			this->settings |= FlashSettings::FlashGold;
+      if ((this->settings & flashTest) != FlashSettings::None)
+        this->settings |= FlashSettings::FlashGold;
 
-      }
+        }
 
 			break;
 
-    case ViewState::Selling:
+    case Merchant_ViewState::Selling:
 
       if ((justPressed & UP_BUTTON) && this->selectedItem > 0)            this->selectedItem--;
       if ((justPressed & DOWN_BUTTON) && this->selectedItem < 4)          this->selectedItem++;
@@ -173,14 +191,14 @@ void MerchantState::update(StateMachine & machine) {
 
   if ((justPressed & LEFT_BUTTON) || (justPressed & RIGHT_BUTTON)) {
     
-    this->viewState = static_cast<ViewState>(!static_cast<bool>(this->viewState));
+    this->viewState = static_cast<Merchant_ViewState>(!static_cast<bool>(this->viewState));
     this->selectedItem = 0;
 
   }
 
   if (justPressed & B_BUTTON) {
 
-    machine.changeState(gameStats.incRoom(playerStats)); 
+    currentState = gameStats.incRoom(playerStats); 
 
   }
 
@@ -190,15 +208,12 @@ void MerchantState::update(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void MerchantState::render(StateMachine & machine) {
-
-	auto & arduboy = machine.getContext().arduboy;
-  auto & ardBitmap = machine.getContext().ardBitmap;
+void MerchantState_render() {
 
 
   // Render common parts ..
 
-  BaseState::renderBackground(machine, true);
+  renderBackground(true);
   ardBitmap.drawCompressed(39, 0, Images::Merchant_Only_Mask_Comp, BLACK, ALIGN_NONE, MIRROR_NONE);
   ardBitmap.drawCompressed(39, 0, Images::Merchant_Only_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
   
@@ -212,11 +227,11 @@ void MerchantState::render(StateMachine & machine) {
 
     switch (this->viewState) {
 
-      case ViewState::Buying:
+      case Merchant_ViewState::Buying:
         imageName = Images::Merchant_Buy_Comp;
         break;
 
-      case ViewState::Selling:
+      case Merchant_ViewState::Selling:
         imageName = Images::Merchant_Sell_Comp;
         break;
 
@@ -237,12 +252,12 @@ void MerchantState::render(StateMachine & machine) {
 
   if (this->errorNumber > 0) {
 
-    BaseState::renderMessageBox(machine, 31, 23, 64, 26);
+    renderMessageBox(31, 23, 64, 26);
     font3x5.setCursor(36, 28);
   	font3x5.print(FlashString(error_Captions[ this->errorNumber - 1]));
 
   }
 
-  BaseState::renderPlayerStatistics(machine, true, this->settings);
+  renderPlayerStatistics(true, this->settings);
 
 }

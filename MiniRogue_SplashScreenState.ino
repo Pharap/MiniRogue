@@ -1,15 +1,15 @@
-#include "SplashScreenState.h"
-#include "../utils/Arduboy2Ext.h"
-#include "../images/Images.h"
-#include "../utils/FadeEffects.h"
+#include "src/utils/Enums.h"
+#include "src/utils/FadeEffects.h"
+
+
+FadeOutEffect fadeOutEffect;
 
 
 // ----------------------------------------------------------------------------
 //  Initialise state ..
 //
-void SplashScreenState::activate(StateMachine & machine) {
+void SplashScreenState::activate() {
 
-  (void)machine;
   fadeOutEffect.reset(0, HEIGHT, 1); 
 
 }
@@ -18,9 +18,7 @@ void SplashScreenState::activate(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
-void SplashScreenState::update(StateMachine & machine) { 
-
-  (void)machine;
+void SplashScreenState::update() { 
 
 }
 
@@ -28,10 +26,7 @@ void SplashScreenState::update(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void SplashScreenState::render(StateMachine & machine) {
-
-	auto & arduboy = machine.getContext().arduboy;
-	auto & ardBitmap = machine.getContext().ardBitmap;
+void SplashScreenState::render() {
 
   ardBitmap.drawCompressed(30, 14, Images::BootLogo, WHITE, ALIGN_NONE, MIRROR_NONE);
 
@@ -42,6 +37,6 @@ void SplashScreenState::render(StateMachine & machine) {
 
   }
 
-  if (fadeOutEffect.isComplete()) machine.changeState(GameStateType::TitleScreen);
+  if (fadeOutEffect.isComplete()) currentState = GameStateType::TitleScreen;
 
 }

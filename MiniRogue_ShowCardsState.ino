@@ -1,7 +1,31 @@
-#include "ShowCardsState.h"
-#include "../images/Images.h"
-#include "../utils/Utils.h"
-#include "../fonts/Font3x5.h"
+#include "src/utils/Enums.h"
+#include "src/fonts/Font3x5.h"
+
+
+char const area_Caption_01[] PROGMEM = ":~The~Black~Sewers";
+char const area_Caption_02[] PROGMEM = ":~Poisonous~Dungeons";
+char const area_Caption_03[] PROGMEM = ":~Undead~Catacombs";
+char const area_Caption_04[] PROGMEM = ":~Flaming~Underworld";
+char const area_Caption_05[] PROGMEM = ":~Sunken~Keep~of~Og!";
+
+char const * const area_Captions[] = {
+	area_Caption_01,
+	area_Caption_02,
+	area_Caption_03,
+	area_Caption_04,
+	area_Caption_05,
+};
+
+enum class ShowCards_ViewState : uint8_t {
+  DealCards,
+  PlayCard,
+  PlayerDead
+};
+
+ShowCards_ViewState viewState = ShowCards_ViewState::DealCards;
+
+int8_t displayCard = 0;           
+uint8_t numberOfCardsToDisplay = 6;
 
 constexpr const static int8_t STARVED_TO_DEATH = -1; 
 constexpr const static uint8_t NO_OF_CARDS_IN_FLIP = 7; 
@@ -18,38 +42,34 @@ const uint8_t cardIndexToRoom[] PROGMEM = { 1, 2, 2, 3, 4, 4, 5 };
 // ----------------------------------------------------------------------------
 //  Initialise state ..
 //
-void ShowCardsState::activate(StateMachine & machine) {
-	
-	auto & arduboy = machine.getContext().arduboy;
-  auto & gameStats = machine.getContext().gameStats;
-	auto & playerStats = machine.getContext().playerStats;
+void ShowCardsState_activate() {
 
 	this->numberOfCardsToDisplay = (gameStats.isLastLevelInArea() ? 7 : 6);
   arduboy.resetFrameCount();
 
 	if (gameStats.room <= 0) {
 
-		this->viewState = ViewState::DealCards;
+		this->viewState = ShowCards_ViewState::DealCards;
 		this->displayCard = 0;
-		this->counter = NO_OF_CARDS_IN_FLIP;
+		counter = NO_OF_CARDS_IN_FLIP;
 
 
 		// Shuffle cards ..
 
-		machine.getContext().cards[6] = GameStateType::BossMonster;
+		cards[6] = GameStateType::BossMonster;
 		
 		for (uint8_t i = 0; i < 10; i++) { 
 			
 			uint8_t x = random(0, 6);
 			uint8_t y = random(0, 6);
-			swap(machine.getContext().cards[x], machine.getContext().cards[y]);
+			swap(cards[x], cards[y]);
 
 		}
 
 		if (playerStats.food == STARVED_TO_DEATH) {
 
   		this->displayCard = CARD_SHOW_ALL;
-			this->viewState = ViewState::PlayerDead;
+			this->viewState = ShowCards_ViewState::PlayerDead;
       playerStats.food = 0;
   		gameStats.room = 0;
 
@@ -60,14 +80,14 @@ void ShowCardsState::activate(StateMachine & machine) {
 			
 		}
 
-		//SJH  machine.getContext().cards[0] = GameStateType::BossMonster;
+		//SJH  cards[0] = GameStateType::BossMonster;
 
 	}
 	else {
 
 		this->displayCard = CARD_SHOW_ALL;
-  	this->counter = NO_OF_CARDS_IN_FLIP;
-		this->viewState = ViewState::PlayCard;
+  	counter = NO_OF_CARDS_IN_FLIP;
+		this->viewState = ShowCards_ViewState::PlayCard;
 		
 	}
   
@@ -77,15 +97,13 @@ void ShowCardsState::activate(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
-void ShowCardsState::update(StateMachine & machine) {
+void ShowCardsState_update() {
 	
-	auto & arduboy = machine.getContext().arduboy;
-	auto & gameStats = machine.getContext().gameStats;
   auto justPressed = arduboy.justPressedButtons();
 
 	switch (this->viewState) {
 
-		case ViewState::DealCards:
+		case ShowCards_ViewState::DealCards:
 
 			if (arduboy.everyXFrames(DEAL_DELAY)) {
 
@@ -94,30 +112,30 @@ void ShowCardsState::update(StateMachine & machine) {
 				}
 				else {
 					this->displayCard = CARD_SHOW_ALL;
-        	this->viewState = ViewState::PlayCard;
-					this->counter = NO_OF_CARDS_IN_FLIP;
+        	this->viewState = ShowCards_ViewState::PlayCard;
+					counter = NO_OF_CARDS_IN_FLIP;
 				}
 
 			}
 			break;
 
-		case ViewState::PlayCard:
+		case ShowCards_ViewState::PlayCard:
 
 			if ((justPressed & UP_BUTTON) && (gameStats.selectedCard == 2 || gameStats.selectedCard == 5)) 		{ gameStats.selectedCard--;}
 			if ((justPressed & DOWN_BUTTON) && (gameStats.selectedCard == 1 || gameStats.selectedCard == 4)) 	{ gameStats.selectedCard ++; }
 
 			if (justPressed & A_BUTTON) { 
 		
-				machine.changeState(machine.getContext().cards[gameStats.selectedCard]); 
+				currentState = cards[gameStats.selectedCard]; 
 				
 			}
 
 			break;
 
-		case ViewState::PlayerDead:
+		case ShowCards_ViewState::PlayerDead:
 
       if (justPressed & A_BUTTON) { 
-        machine.changeState(GameStateType::PlayerDead);
+        currentState = GameStateType::PlayerDead;
 			}
 
 			break;
@@ -130,11 +148,7 @@ void ShowCardsState::update(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void ShowCardsState::render(StateMachine & machine) {
-
-	auto & arduboy = machine.getContext().arduboy;
-	auto & gameStats = machine.getContext().gameStats;
-	auto & ardBitmap = machine.getContext().ardBitmap;
+void ShowCardsState_render() {
 	
 	uint8_t room = gameStats.room;
 
@@ -163,9 +177,9 @@ void ShowCardsState::render(StateMachine & machine) {
 
 	// Player statistics ..
 
-	const FlashSettings settings = ((viewState == ViewState::PlayerDead) ? FlashSettings::FlashFood : FlashSettings::None);
+	const FlashSettings settings = ((viewState == ShowCards_ViewState::PlayerDead) ? FlashSettings::FlashFood : FlashSettings::None);
 
-	BaseState::renderPlayerStatistics(machine, true, settings);
+	renderPlayerStatistics(true, settings);
 
   const bool flash = arduboy.getFrameCountHalf(12);
 
@@ -180,9 +194,9 @@ void ShowCardsState::render(StateMachine & machine) {
 
       // Draw cards as they are being dealt ..
 
-			if (this->counter == NO_OF_CARDS_IN_FLIP || (room != r && this->counter > 0) || this->counter == 0) {
+			if (counter == NO_OF_CARDS_IN_FLIP || (room != r && counter > 0) || counter == 0) {
 
-        BaseState::renderSpinningCard(machine, x, y, 6);
+        renderSpinningCard(x, y, 6);
 
 			}
 
@@ -197,16 +211,16 @@ void ShowCardsState::render(StateMachine & machine) {
 
       if (room != 0) {
 
-        if ((room > r) || (room == r && this->counter == 0) || (i == 6 && this->numberOfCardsToDisplay == 6)) {
+        if ((room > r) || (room == r && counter == 0) || (i == 6 && this->numberOfCardsToDisplay == 6)) {
 
           arduboy.fillRect(x + 3, y + 4, 14, 21, BLACK);
-          ardBitmap.drawCompressed(x + 3, y + 6, Images::Card_Faces[(i == 6 && this->numberOfCardsToDisplay == 6 ? 7 : static_cast<uint8_t>(machine.getContext().cards[i]) - 1)], WHITE, ALIGN_NONE, MIRROR_NONE);
+          ardBitmap.drawCompressed(x + 3, y + 6, Images::Card_Faces[(i == 6 && this->numberOfCardsToDisplay == 6 ? 7 : static_cast<uint8_t>(cards[i]) - 1)], WHITE, ALIGN_NONE, MIRROR_NONE);
 
         }
 
-        if (room == r && this->counter > 0 && this->displayCard == CARD_SHOW_ALL) {
+        if (room == r && counter > 0 && this->displayCard == CARD_SHOW_ALL) {
 
-					BaseState::renderSpinningCard(machine, x, y, this->counter - 1);
+					renderSpinningCard(x, y, counter - 1);
 
         }
 
@@ -216,14 +230,14 @@ void ShowCardsState::render(StateMachine & machine) {
 
 	}
 
-	if (this->counter > 0 && this->displayCard == CARD_SHOW_ALL) this->counter --;
+	if (counter > 0 && this->displayCard == CARD_SHOW_ALL) counter --;
 
 
 	// Are we dead?
 
-  if (viewState == ViewState::PlayerDead) {
+  if (viewState == ShowCards_ViewState::PlayerDead) {
 
-    BaseState::renderPlayerDead();
+    renderPlayerDead();
 
 	}
 

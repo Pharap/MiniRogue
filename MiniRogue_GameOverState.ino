@@ -1,8 +1,26 @@
-#include "GameOverState.h"
-#include "../utils/Arduboy2Ext.h"
-#include "../images/Images.h"
-#include "../utils/FadeEffects.h"
+#include "src/utils/Enums.h"
 
+char const level_Caption_01[] PROGMEM = "Easy:";
+char const level_Caption_02[] PROGMEM = "Normal:";
+char const level_Caption_03[] PROGMEM = "Hard:";
+char const level_Caption_04[] PROGMEM = "Hell:";
+
+char const * const level_Captions[] = {
+	level_Caption_01,
+	level_Caption_02,
+	level_Caption_03,
+	level_Caption_04,
+};
+
+enum class GameOver_ViewState : uint8_t {
+  PlayerDead,
+  Winner,
+  HighScore
+};
+
+GameOver_ViewState viewState = GameOver_ViewState::PlayerDead;
+uint8_t score = 123;
+uint8_t highScore = 456;
 
 #define EEPROM_START                  EEPROM_STORAGE_SPACE_START + 130
 #define EEPROM_START_C1               EEPROM_START
@@ -10,23 +28,19 @@
 #define EEPROM_SCORE                  EEPROM_START + 2
 
 
-
 // ----------------------------------------------------------------------------
 //  Initialise state ..
 //
-void GameOverState::activate(StateMachine & machine) {
+void GameOverState_activate() {
 	
-	auto & gameStats = machine.getContext().gameStats;
-	auto & playerStats = machine.getContext().playerStats;
-
-	switch (machine.getContext().gameState) {
+	switch (currentState) {
 
 		case GameStateType::PlayerDead:
-			viewState = ViewState::PlayerDead; 
+			viewState = GameOver_ViewState::PlayerDead; 
 			break;
 
 		case GameStateType::Winner:
-			viewState = ViewState::Winner; 
+			viewState = GameOver_ViewState::Winner; 
 			break;
 
 		default: break;
@@ -59,22 +73,21 @@ void GameOverState::activate(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
-void GameOverState::update(StateMachine & machine) { 
+void GameOverState_update() { 
 
-	auto & arduboy = machine.getContext().arduboy;
   auto justPressed = arduboy.justPressedButtons();
 
   if (justPressed & A_BUTTON) { 
 		
 		switch (this->viewState) {
 
-			case ViewState::PlayerDead:
-			case ViewState::Winner: 
-				viewState = ViewState::HighScore; 
+			case GameOver_ViewState::PlayerDead:
+			case GameOver_ViewState::Winner: 
+				viewState = GameOver_ViewState::HighScore; 
 				break;
 
-			case ViewState::HighScore:
-				machine.changeState(GameStateType::TitleScreen); 
+			case GameOver_ViewState::HighScore:
+				currentState = GameStateType::TitleScreen; 
 				break;
 
 		}
@@ -87,26 +100,21 @@ void GameOverState::update(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void GameOverState::render(StateMachine & machine) {
+void GameOverState_render() {
 
-	auto & arduboy = machine.getContext().arduboy;
-	auto & ardBitmap = machine.getContext().ardBitmap;
-	auto & gameStats = machine.getContext().gameStats;
-	auto & playerStats = machine.getContext().playerStats;
-
-	BaseState::renderTitleBackground(machine, (viewState != ViewState::HighScore));
+	renderTitleBackground(viewState != GameOver_ViewState::HighScore);
 
 	switch (this->viewState) {
 
-		case ViewState::PlayerDead:
+		case GameOver_ViewState::PlayerDead:
 			ardBitmap.drawCompressed(29, 21, Images::Title_Game_Over_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 			break;
 
-		case ViewState::Winner:
+		case GameOver_ViewState::Winner:
 			ardBitmap.drawCompressed(24, 15, Images::Winner_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 			break;
 
-		case ViewState::HighScore:
+		case GameOver_ViewState::HighScore:
 			{
 				ardBitmap.drawCompressed(20, 21, Images::High_Score_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 
@@ -141,7 +149,7 @@ void GameOverState::render(StateMachine & machine) {
 
 }
 
-void GameOverState::renderTwoDigitNumeric(uint8_t val) { 
+void GameOverState_renderTwoDigitNumeric(uint8_t val) { 
 
 	if (val < 10) font3x5.print(F("0"));
 	font3x5.print(val);
@@ -149,7 +157,7 @@ void GameOverState::renderTwoDigitNumeric(uint8_t val) {
 
 }
 
-void GameOverState::renderThreeDigitNumeric(uint8_t val) { 
+void GameOverState_renderThreeDigitNumeric(uint8_t val) { 
 
 	if (val < 100) font3x5.print(F("0"));
 	if (val < 10) font3x5.print(F("0"));
@@ -171,7 +179,7 @@ void GameOverState::renderThreeDigitNumeric(uint8_t val) {
 const uint8_t letter1 = 'M'; 
 const uint8_t letter2 = 'R'; 
 
-void GameOverState::initEEPROM(bool forceClear) {
+void GameOverState_initEEPROM(bool forceClear) {
 
   byte c1 = EEPROM.read(EEPROM_START_C1);
   byte c2 = EEPROM.read(EEPROM_START_C2);

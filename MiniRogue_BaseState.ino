@@ -1,13 +1,44 @@
-#include "BaseState.h"
+#include "src/utils/Enums.h"
+#include "src/utils/FadeEffects.h"
+#include "src/fonts/Font3x5.h"
 
-#include "../images/Images.h"
-#include "../utils/Utils.h"
-#include "../utils/Enums.h"
-#include "../fonts/Font3x5.h"
+enum FlashSettings : uint8_t {
+	None = 0,
+	FlashXP = (1 << 0),
+	FlashHP = (1 << 1),
+	FlashArmour = (1 << 2),
+	FlashGold = (1 << 3),
+	FlashFood = (1 << 4),
+};
 
-void BaseState::renderSpinningCard(StateMachine & machine, int8_t x, int8_t y, uint8_t i, uint8_t ySpacing) {
+constexpr inline FlashSettings operator |(FlashSettings left, FlashSettings right) {
+	return static_cast<FlashSettings>(static_cast<uint8_t>(left) | static_cast<uint8_t>(right));
+}
 
-  auto & ardBitmap = machine.getContext().ardBitmap;
+constexpr inline FlashSettings operator &(FlashSettings left, FlashSettings right) {
+	return static_cast<FlashSettings>(static_cast<uint8_t>(left) & static_cast<uint8_t>(right));
+}
+
+constexpr inline FlashSettings operator ^(FlashSettings left, FlashSettings right) {
+	return static_cast<FlashSettings>(static_cast<uint8_t>(left) ^ static_cast<uint8_t>(right));
+}
+
+inline FlashSettings & operator |=(FlashSettings & left, FlashSettings right) {
+	left = (left | right);
+	return left;
+}
+
+inline FlashSettings & operator &=(FlashSettings & left, FlashSettings right) {
+	left = (left & right);
+	return left;
+}
+
+inline FlashSettings & operator ^=(FlashSettings & left, FlashSettings right) {
+	left = (left ^ right);
+	return left;
+}
+
+void renderSpinningCard(int8_t x, int8_t y, uint8_t i, uint8_t ySpacing) {
 
   const auto spinning_mask = Images::spinning_mask[i];
   const auto spinning_card = Images::spinning_card[i];
@@ -30,9 +61,7 @@ void BaseState::renderSpinningCard(StateMachine & machine, int8_t x, int8_t y, u
 
 }
 
-void BaseState::renderLargeSpinningCard(StateMachine & machine, int8_t x, int8_t y, uint8_t i) {
-
-	auto & ardBitmap = machine.getContext().ardBitmap;
+void renderLargeSpinningCard(int8_t x, int8_t y, uint8_t i) {
 
 	const auto spinning_card = Images::Large_Spinning_Cards[i];
 
@@ -46,10 +75,7 @@ void BaseState::renderLargeSpinningCard(StateMachine & machine, int8_t x, int8_t
 
 }
 
-void BaseState::renderTitleBackground(StateMachine & machine, bool drawLowerLines) {
-
-	auto & ardBitmap = machine.getContext().ardBitmap;
-  auto & arduboy = machine.getContext().arduboy;
+void renderTitleBackground(bool drawLowerLines) {
 
 	ardBitmap.drawCompressed(0, 0, Images::Title_Blank_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 	ardBitmap.drawCompressed(64, 0, Images::Title_Blank_Comp, WHITE, ALIGN_NONE, MIRROR_HORIZONTAL);
@@ -62,9 +88,7 @@ void BaseState::renderTitleBackground(StateMachine & machine, bool drawLowerLine
 
 }
 
-void BaseState::renderMessageBox(StateMachine & machine, uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
-
-	auto & arduboy = machine.getContext().arduboy;
+void renderMessageBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
 
   arduboy.fillRect(x, y, w, h, BLACK);
   arduboy.drawFastHLine(x + 3, y + 2, w - 6);
@@ -74,23 +98,21 @@ void BaseState::renderMessageBox(StateMachine & machine, uint8_t x, uint8_t y, u
 
 }
 
-void BaseState::renderPlayerDead() {
+void renderPlayerDead() {
 
   Sprites::drawOverwrite(38, 25, Images::Message_PlayerDead, 0);
 
 }
 
-void BaseState::renderMonsterDead(StateMachine & machine) {
+void renderMonsterDead() {
 
-  renderMessageBox(machine, 34, 24, 60, 18);
+  renderMessageBox(34, 24, 60, 18);
   font3x5.setCursor(40, 29);
   font3x5.print(F("Enemy Killed"));
 
 }
 
-void BaseState::renderBackground(StateMachine & machine, bool renderCorners) {
-
-	auto & ardBitmap = machine.getContext().ardBitmap;
+void renderBackground(bool renderCorners) {
 
   if (renderCorners) ardBitmap.drawCompressed(0, 0, Images::Background_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
   for (uint8_t y= 0; y < 64; y = y + 10)  ardBitmap.drawCompressed(89, y, Images::Background_Divider_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
@@ -98,10 +120,7 @@ void BaseState::renderBackground(StateMachine & machine, bool renderCorners) {
 
 }
 
-void BaseState::renderPlayerStatistics(StateMachine & machine, bool overallFlash, FlashSettings settings){
-
-	auto & arduboy = machine.getContext().arduboy;
-	auto & playerStats = machine.getContext().playerStats;
+void renderPlayerStatistics(bool overallFlash, FlashSettings settings){
 
   const bool flash = arduboy.getFrameCountHalf(FLASH_DELAY) && overallFlash;
 
@@ -172,7 +191,7 @@ void BaseState::renderPlayerStatistics(StateMachine & machine, bool overallFlash
 
 }
 
-void BaseState::drawItem(uint8_t position, uint8_t const *imageName) {
+void drawItem(uint8_t position, uint8_t const *imageName) {
 
   Sprites::drawOverwrite(107 + (position * 11), 56, imageName, 0);
 

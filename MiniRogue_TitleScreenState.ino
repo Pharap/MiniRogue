@@ -1,5 +1,8 @@
-#include "TitleScreenState.h"
-#include "../images/Images.h"
+#include "src/utils/Enums.h"
+#include "src/images/Images.h"
+
+
+uint8_t restart = 0;
 
 constexpr const static uint8_t MIN_LEVEL = 0;
 constexpr const static uint8_t MAX_LEVEL = 3;
@@ -9,11 +12,8 @@ constexpr const static uint8_t UPLOAD_DELAY = 16;
 // ----------------------------------------------------------------------------
 //  Handle state updates .. 
 //
-void TitleScreenState::update(StateMachine & machine) {
+void TitleScreenState_update() {
 
-	auto & arduboy = machine.getContext().arduboy;
-	auto & playerStats = machine.getContext().playerStats;
-	auto & gameStats = machine.getContext().gameStats;
   auto justPressed = arduboy.justPressedButtons();
   auto pressed = arduboy.pressedButtons();
 
@@ -52,7 +52,7 @@ void TitleScreenState::update(StateMachine & machine) {
 		playerStats.xpTrack = 1;
 
 		machine.getContext().resetGame();
-		machine.changeState(GameStateType::ShowCards);
+		currentState = GameStateType::ShowCards;
 	
 		//SJH playerStats.hp = 20; 
 		//SJH playerStats.items[0] = 1; 
@@ -66,13 +66,9 @@ void TitleScreenState::update(StateMachine & machine) {
 // ----------------------------------------------------------------------------
 //  Render the state .. 
 //
-void TitleScreenState::render(StateMachine & machine) {
+void TitleScreenState_render() {
 
-	auto & arduboy = machine.getContext().arduboy;
-	auto & gameStats = machine.getContext().gameStats;
-	auto & ardBitmap = machine.getContext().ardBitmap;
-
-	BaseState::renderTitleBackground(machine, true);
+	renderTitleBackground(true);
 	ardBitmap.drawCompressed(28, 17, Images::Title_Mini_Rogue_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 	ardBitmap.drawCompressed(19, 56, Images::Title_Levels_Comp, WHITE, ALIGN_NONE, MIRROR_NONE);
 
